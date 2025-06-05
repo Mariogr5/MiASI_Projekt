@@ -1,0 +1,105 @@
+[comment encoding = UTF-8 /]
+[**
+ * The documentation of the module generate.
+ */]
+[module generate('http://www.eclipse.org/uml2/5.0.0/UML')]
+
+
+[**
+ * The documentation of the template generateElement.
+ * @param aClass
+ */]
+[template public generateElement(stateMachine : StateMachine)]
+
+[comment @main /]
+[file ('State.hpp', false, 'UTF-8')]
+#pragma once
+class Context;
+
+class State {
+public:
+    virtual ~State() = default;
+    virtual void enter() = 0;
+    virtual void do() = 0;
+    virtual void exit() = 0;
+    virtual void transition(Context& context) = 0;
+    virtual const char* name() const = 0;
+};
+[/file]
+
+
+
+[comment @main /]
+[file ('Context.hpp', false, 'UTF-8')]
+#pragma once
+#include <memory>
+#include <iostream>
+#include "State.hpp"
+
+class Context {
+private:
+    std::unique_ptr<State> currentState;
+
+public:
+    Context(std::unique_ptr<State> initialState)
+        : currentState(std::move(initialState)) {}
+
+    void setState(std::unique_ptr<State> newState) {
+        currentState = std::move(newState);
+    }
+
+    void transition() {
+        currentState->transition(*this);
+    }
+
+    void printState() const {
+        std::cout << "Current state: " << currentState->name() << std::endl;
+    }
+};
+[/file]
+
+[for (state : State | stateMachine.region->collect(r | r.subvertex)->flatten()->filter(uml::State))]
+
+[comment @main/]
+	[file (state.name.concat('.hpp'), false, 'UTF-8')]
+#pragma once
+#include "State.hpp"
+
+class [state.name/] : public State {
+public:
+	void enter() override;
+	void do() override;
+	void exit() override;
+	void transition(Context& context) override;
+    const char* name() const override;
+}
+	[/file]
+
+[comment @main /]
+[file (state.name.concat('.cpp'), false, 'UTF-8')]
+#include "[state.name/]"
+#include "Context.hpp"
+#include <iostream>
+
+void [state.name/]::enter(Context& context) {
+}
+void [state.name/]::do(Context& context) {
+}
+void [state.name/]::exit(Context& context) {
+}
+void [state.name/]::transition(Context& context) {
+}
+
+const char* [state.name/]::name() const {
+    return "[state.name/]";
+}
+[/file]
+
+
+
+
+
+
+[/for]
+
+[/template]

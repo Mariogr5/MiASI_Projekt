@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_-lhJEEJCEfC8Cv6QapW8jg">
+  <packagedElement xmi:type="uml:StateMachine" xmi:id="_CxxuIEJDEfC8Cv6QapW8jg" name="weatherStationStateMachine">
+    <region xmi:id="_rFVQgEJOEfC8Cv6QapW8jg">
+      <transition xmi:id="_aCOfYEJPEfC8Cv6QapW8jg" source="_ZjbhAEJDEfC8Cv6QapW8jg" target="_rFVQgUJOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_vdaOkEJPEfC8Cv6QapW8jg" source="_rFVQgUJOEfC8Cv6QapW8jg" target="_IUkx4EJPEfC8Cv6QapW8jg">
+        <trigger xmi:id="_scRjYEJQEfC8Cv6QapW8jg" name="init_complete"/>
+      </transition>
+      <transition xmi:id="_vjZh0EJPEfC8Cv6QapW8jg" source="_IUkx4EJPEfC8Cv6QapW8jg" target="_rFVQg0JOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_voBjIEJPEfC8Cv6QapW8jg" source="_IUkx4EJPEfC8Cv6QapW8jg" target="_rFVQhUJOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_vxtqoEJPEfC8Cv6QapW8jg" source="_rFVQhUJOEfC8Cv6QapW8jg" target="_rFVQh0JOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_v3lCEEJPEfC8Cv6QapW8jg" source="_rFVQg0JOEfC8Cv6QapW8jg" target="_rFVQhEJOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_v818kEJPEfC8Cv6QapW8jg" source="_rFVQhEJOEfC8Cv6QapW8jg" target="_IFnI0EJPEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_wBsAUEJPEfC8Cv6QapW8jg" source="_rFVQg0JOEfC8Cv6QapW8jg" target="_IFnI0EJPEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_wGIbcEJPEfC8Cv6QapW8jg" source="_rFVQhEJOEfC8Cv6QapW8jg" target="_rFVQhUJOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_wO7yIEJPEfC8Cv6QapW8jg" source="_rFVQh0JOEfC8Cv6QapW8jg" target="_ILS6EEJPEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_wUgOoEJPEfC8Cv6QapW8jg" source="_rFVQh0JOEfC8Cv6QapW8jg" target="_GhpbsEJPEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_HYknMEJQEfC8Cv6QapW8jg" source="_ILS6EEJPEfC8Cv6QapW8jg" target="_rFVQgUJOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_HhGREEJQEfC8Cv6QapW8jg" source="_rFVQhUJOEfC8Cv6QapW8jg" target="_rFVQiEJOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_HnplAEJQEfC8Cv6QapW8jg" source="_rFVQiEJOEfC8Cv6QapW8jg" target="_rFVQiUJOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_Hs5RYEJQEfC8Cv6QapW8jg" source="_rFVQiUJOEfC8Cv6QapW8jg" target="_GhpbsEJPEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_TqcBcEJQEfC8Cv6QapW8jg" source="_rFVQiUJOEfC8Cv6QapW8jg" target="_rFVQikJOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_TykCsEJQEfC8Cv6QapW8jg" source="_rFVQikJOEfC8Cv6QapW8jg" target="_rFVQhUJOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_T34AgEJQEfC8Cv6QapW8jg" source="_rFVQikJOEfC8Cv6QapW8jg" target="_IFnI0EJPEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_UEncAEJQEfC8Cv6QapW8jg" source="_rFVQhUJOEfC8Cv6QapW8jg" target="_rFVQhkJOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_UMQ8IEJQEfC8Cv6QapW8jg" source="_rFVQhkJOEfC8Cv6QapW8jg" target="_rFVQhUJOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_US7k0EJQEfC8Cv6QapW8jg" source="_GhpbsEJPEfC8Cv6QapW8jg" target="_ILS6EEJPEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_UZVHwEJQEfC8Cv6QapW8jg" source="_IFnI0EJPEfC8Cv6QapW8jg" target="_IQRgsEJPEfC8Cv6QapW8jg"/>
+      <subvertex xmi:type="uml:State" xmi:id="_rFVQgUJOEfC8Cv6QapW8jg" name="INITIAL"/>
+      <subvertex xmi:type="uml:State" xmi:id="_rFVQg0JOEfC8Cv6QapW8jg" name="NETWORK_CONFIGURATION"/>
+      <subvertex xmi:type="uml:State" xmi:id="_rFVQhEJOEfC8Cv6QapW8jg" name="WAIT_ON_SYNCHRONIZATION"/>
+      <subvertex xmi:type="uml:State" xmi:id="_rFVQhUJOEfC8Cv6QapW8jg" name="READY"/>
+      <subvertex xmi:type="uml:State" xmi:id="_rFVQhkJOEfC8Cv6QapW8jg" name="SERVICE_MODE"/>
+      <subvertex xmi:type="uml:State" xmi:id="_rFVQh0JOEfC8Cv6QapW8jg" name="FIRMWARE_UPDATE"/>
+      <subvertex xmi:type="uml:State" xmi:id="_rFVQiEJOEfC8Cv6QapW8jg" name="MEASUREMENT"/>
+      <subvertex xmi:type="uml:State" xmi:id="_rFVQiUJOEfC8Cv6QapW8jg" name="RESULT_SAVING"/>
+      <subvertex xmi:type="uml:State" xmi:id="_rFVQikJOEfC8Cv6QapW8jg" name="DATA_TRANSMISSION"/>
+      <subvertex xmi:type="uml:Pseudostate" xmi:id="_ZjbhAEJDEfC8Cv6QapW8jg" name="START"/>
+      <subvertex xmi:type="uml:State" xmi:id="_GhpbsEJPEfC8Cv6QapW8jg" name="DEVICE_ERROR"/>
+      <subvertex xmi:type="uml:State" xmi:id="_IFnI0EJPEfC8Cv6QapW8jg" name="COMMUNICATION_ERROR"/>
+      <subvertex xmi:type="uml:State" xmi:id="_ILS6EEJPEfC8Cv6QapW8jg" name="EMERGENCY_TEST"/>
+      <subvertex xmi:type="uml:State" xmi:id="_IQRgsEJPEfC8Cv6QapW8jg" name="EMERGENCY_RESET"/>
+      <subvertex xmi:type="uml:State" xmi:id="_IUkx4EJPEfC8Cv6QapW8jg" name="DIAGNOSTIC"/>
+    </region>
+  </packagedElement>
+</uml:Model>
