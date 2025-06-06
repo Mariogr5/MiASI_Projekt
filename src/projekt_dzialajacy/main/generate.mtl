@@ -1,14 +1,10 @@
 [comment encoding = UTF-8 /]
 [**
- * The documentation of the module generate.
+ * Generator for C++ classes from UML state machine model.
  */]
 [module generate('http://www.eclipse.org/uml2/5.0.0/UML')]
 
-
-[**
- * The documentation of the template generateElement.
- * @param aClass
- */]
+[comment @main/]
 [template public generateElement(stateMachine : StateMachine)]
 
 [comment @main /]
@@ -19,15 +15,13 @@ class Context;
 class State {
 public:
     virtual ~State() = default;
-    virtual void enter() = 0;
-    virtual void do() = 0;
-    virtual void exit() = 0;
+    virtual void enter(Context& context) = 0;
+    virtual void doActivity(Context& context) = 0;
+    virtual void exit(Context& context) = 0;
     virtual void transition(Context& context) = 0;
     virtual const char* name() const = 0;
 };
 [/file]
-
-
 
 [comment @main /]
 [file ('Context.hpp', false, 'UTF-8')]
@@ -60,45 +54,65 @@ public:
 
 [for (state : State | stateMachine.region->collect(r | r.subvertex)->flatten()->filter(uml::State))]
 
-[comment @main/]
-	[file (state.name.concat('.hpp'), false, 'UTF-8')]
+[comment @main /]
+[file (state.name.concat('.hpp'), false, 'UTF-8')]
 #pragma once
 #include "State.hpp"
+[for (target : NamedElement | state.outgoing->filter(Transition)->collect(t | t.target)->asSet())]
+#include "[target.name/].hpp"
+[/for]
 
 class [state.name/] : public State {
 public:
-	void enter() override;
-	void do() override;
-	void exit() override;
-	void transition(Context& context) override;
+    void enter(Context& context) override;
+    void doActivity(Context& context) override;
+    void exit(Context& context) override;
+    void transition(Context& context) override;
     const char* name() const override;
-}
-	[/file]
+};
+[/file]
 
 [comment @main /]
 [file (state.name.concat('.cpp'), false, 'UTF-8')]
-#include "[state.name/]"
+#include "[state.name/].hpp"
 #include "Context.hpp"
 #include <iostream>
 
 void [state.name/]::enter(Context& context) {
+    std::cout << "Entering state: [state.name/]" << std::endl;
 }
-void [state.name/]::do(Context& context) {
+
+void [state.name/]::doActivity(Context& context) {
+    std::cout << "Executing activity in state: [state.name/]" << std::endl;
 }
+
 void [state.name/]::exit(Context& context) {
+    std::cout << "Exiting state: [state.name/]" << std::endl;
 }
+
 void [state.name/]::transition(Context& context) {
+[for (t : Transition | state.outgoing->filter(Transition))]
+    // Transition to [t.target.name/]
+    [if (t.trigger->notEmpty())]
+    [for (tr : Trigger | t.trigger->asSequence()->first())]
+    // Trigger: [tr.name/]
+    [/for]
+    [/if]
+    [if (t.target.oclIsTypeOf(FinalState))]
+    std::cout << "Reached final state. Terminating..." << std::endl;
+    exit(context);
+    std::exit(0);
+    [else]
+    context.setState(std::make_unique<[t.target.name/]>()); 
+    return;
+    [/if]
+[/for]
 }
 
 const char* [state.name/]::name() const {
     return "[state.name/]";
 }
 [/file]
-
-
-
-
-
 
 [/for]
 
