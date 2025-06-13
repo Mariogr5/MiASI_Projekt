@@ -2,17 +2,53 @@
 <uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_-lhJEEJCEfC8Cv6QapW8jg">
   <packagedElement xmi:type="uml:StateMachine" xmi:id="_CxxuIEJDEfC8Cv6QapW8jg" name="weatherStationStateMachine">
     <region xmi:id="_rFVQgEJOEfC8Cv6QapW8jg">
-      <transition xmi:id="_aCOfYEJPEfC8Cv6QapW8jg" source="_ZjbhAEJDEfC8Cv6QapW8jg" target="_rFVQgUJOEfC8Cv6QapW8jg"/>
-      <transition xmi:id="_vdaOkEJPEfC8Cv6QapW8jg" source="_rFVQgUJOEfC8Cv6QapW8jg" target="_IUkx4EJPEfC8Cv6QapW8jg">
-        <trigger xmi:id="_scRjYEJQEfC8Cv6QapW8jg" name="init_complete"/>
+      <transition xmi:id="_aCOfYEJPEfC8Cv6QapW8jg" source="_ZjbhAEJDEfC8Cv6QapW8jg" target="_rFVQgUJOEfC8Cv6QapW8jg">
+        <ownedComment xmi:id="_nugKMEiGEfCItOe4N9qQKw">
+          <body>START Device</body>
+        </ownedComment>
       </transition>
-      <transition xmi:id="_vjZh0EJPEfC8Cv6QapW8jg" source="_IUkx4EJPEfC8Cv6QapW8jg" target="_rFVQg0JOEfC8Cv6QapW8jg"/>
-      <transition xmi:id="_voBjIEJPEfC8Cv6QapW8jg" source="_IUkx4EJPEfC8Cv6QapW8jg" target="_rFVQhUJOEfC8Cv6QapW8jg"/>
-      <transition xmi:id="_vxtqoEJPEfC8Cv6QapW8jg" source="_rFVQhUJOEfC8Cv6QapW8jg" target="_rFVQh0JOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_vdaOkEJPEfC8Cv6QapW8jg" source="_rFVQgUJOEfC8Cv6QapW8jg" target="_IUkx4EJPEfC8Cv6QapW8jg">
+        <ownedComment xmi:id="_obfMAEiGEfCItOe4N9qQKw">
+          <body>Initial to diagnostic comment</body>
+        </ownedComment>
+        <trigger xmi:id="_scRjYEJQEfC8Cv6QapW8jg" name="init_complete" event="_e9ANcEiIEfCItOe4N9qQKw"/>
+      </transition>
+      <transition xmi:id="_vjZh0EJPEfC8Cv6QapW8jg" guard="_KrmpcEiLEfCItOe4N9qQKw" source="_IUkx4EJPEfC8Cv6QapW8jg" target="_rFVQg0JOEfC8Cv6QapW8jg">
+        <ownedComment xmi:id="_o_OyQEiGEfCItOe4N9qQKw">
+          <body>To network configuration</body>
+        </ownedComment>
+        <ownedRule xmi:id="_KrmpcEiLEfCItOe4N9qQKw" name="missing_configuration_guard">
+          <specification xmi:type="uml:OpaqueExpression" xmi:id="_NlpYsEiLEfCItOe4N9qQKw">
+            <body>missing_configuration==true</body>
+          </specification>
+        </ownedRule>
+        <effect xmi:type="uml:Activity" xmi:id="_eb_DsEiLEfCItOe4N9qQKw" name="start_configuration"/>
+      </transition>
+      <transition xmi:id="_voBjIEJPEfC8Cv6QapW8jg" guard="_8bngMEiLEfCItOe4N9qQKw" source="_IUkx4EJPEfC8Cv6QapW8jg" target="_rFVQhUJOEfC8Cv6QapW8jg">
+        <ownedRule xmi:id="_8bngMEiLEfCItOe4N9qQKw" name="check_configuration_guard">
+          <specification xmi:type="uml:OpaqueExpression" xmi:id="_-YdnYEiLEfCItOe4N9qQKw">
+            <body>missing_configuration==false</body>
+          </specification>
+        </ownedRule>
+      </transition>
+      <transition xmi:id="_vxtqoEJPEfC8Cv6QapW8jg" guard="_iERRoEiOEfCItOe4N9qQKw" source="_rFVQhUJOEfC8Cv6QapW8jg" target="_rFVQh0JOEfC8Cv6QapW8jg">
+        <ownedComment xmi:id="_54EeAEiOEfCItOe4N9qQKw">
+          <body>Checking if firmware update is avaiable</body>
+        </ownedComment>
+        <ownedRule xmi:id="_iERRoEiOEfCItOe4N9qQKw" name="firmware_update_avaiable_guard">
+          <specification xmi:type="uml:OpaqueExpression" xmi:id="_maj8cEiOEfCItOe4N9qQKw">
+            <body>firmware_update_avaiable==true</body>
+          </specification>
+        </ownedRule>
+        <effect xmi:type="uml:Activity" xmi:id="_yXqAkEiOEfCItOe4N9qQKw" name="download_new_firmware"/>
+        <trigger xmi:id="_ek0vQEiOEfCItOe4N9qQKw" name="Firmware_update_avaiable" event="_St6LoEiOEfCItOe4N9qQKw"/>
+      </transition>
       <transition xmi:id="_v3lCEEJPEfC8Cv6QapW8jg" source="_rFVQg0JOEfC8Cv6QapW8jg" target="_rFVQhEJOEfC8Cv6QapW8jg"/>
       <transition xmi:id="_v818kEJPEfC8Cv6QapW8jg" source="_rFVQhEJOEfC8Cv6QapW8jg" target="_IFnI0EJPEfC8Cv6QapW8jg"/>
       <transition xmi:id="_wBsAUEJPEfC8Cv6QapW8jg" source="_rFVQg0JOEfC8Cv6QapW8jg" target="_IFnI0EJPEfC8Cv6QapW8jg"/>
-      <transition xmi:id="_wGIbcEJPEfC8Cv6QapW8jg" source="_rFVQhEJOEfC8Cv6QapW8jg" target="_rFVQhUJOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_wGIbcEJPEfC8Cv6QapW8jg" source="_rFVQhEJOEfC8Cv6QapW8jg" target="_rFVQhUJOEfC8Cv6QapW8jg">
+        <trigger xmi:id="_ZO7eEEiNEfCItOe4N9qQKw" name="synchronization_ended" event="_cRFngEiNEfCItOe4N9qQKw"/>
+      </transition>
       <transition xmi:id="_wO7yIEJPEfC8Cv6QapW8jg" source="_rFVQh0JOEfC8Cv6QapW8jg" target="_ILS6EEJPEfC8Cv6QapW8jg"/>
       <transition xmi:id="_wUgOoEJPEfC8Cv6QapW8jg" source="_rFVQh0JOEfC8Cv6QapW8jg" target="_GhpbsEJPEfC8Cv6QapW8jg"/>
       <transition xmi:id="_HYknMEJQEfC8Cv6QapW8jg" source="_ILS6EEJPEfC8Cv6QapW8jg" target="_rFVQgUJOEfC8Cv6QapW8jg"/>
@@ -22,14 +58,33 @@
       <transition xmi:id="_TqcBcEJQEfC8Cv6QapW8jg" source="_rFVQiUJOEfC8Cv6QapW8jg" target="_rFVQikJOEfC8Cv6QapW8jg"/>
       <transition xmi:id="_TykCsEJQEfC8Cv6QapW8jg" source="_rFVQikJOEfC8Cv6QapW8jg" target="_rFVQhUJOEfC8Cv6QapW8jg"/>
       <transition xmi:id="_T34AgEJQEfC8Cv6QapW8jg" source="_rFVQikJOEfC8Cv6QapW8jg" target="_IFnI0EJPEfC8Cv6QapW8jg"/>
-      <transition xmi:id="_UEncAEJQEfC8Cv6QapW8jg" source="_rFVQhUJOEfC8Cv6QapW8jg" target="_rFVQhkJOEfC8Cv6QapW8jg"/>
-      <transition xmi:id="_UMQ8IEJQEfC8Cv6QapW8jg" source="_rFVQhkJOEfC8Cv6QapW8jg" target="_rFVQhUJOEfC8Cv6QapW8jg"/>
+      <transition xmi:id="_UEncAEJQEfC8Cv6QapW8jg" source="_rFVQhUJOEfC8Cv6QapW8jg" target="_rFVQhkJOEfC8Cv6QapW8jg">
+        <trigger xmi:id="_o0CAIEiMEfCItOe4N9qQKw" name="service_command" event="_MvZQsEiMEfCItOe4N9qQKw"/>
+      </transition>
+      <transition xmi:id="_UMQ8IEJQEfC8Cv6QapW8jg" source="_rFVQhkJOEfC8Cv6QapW8jg" target="_rFVQhUJOEfC8Cv6QapW8jg">
+        <trigger xmi:id="_QSPP4EiNEfCItOe4N9qQKw" name="exit_maintanance" event="_uhOzgEiMEfCItOe4N9qQKw"/>
+      </transition>
       <transition xmi:id="_US7k0EJQEfC8Cv6QapW8jg" source="_GhpbsEJPEfC8Cv6QapW8jg" target="_ILS6EEJPEfC8Cv6QapW8jg"/>
       <transition xmi:id="_UZVHwEJQEfC8Cv6QapW8jg" source="_IFnI0EJPEfC8Cv6QapW8jg" target="_IQRgsEJPEfC8Cv6QapW8jg"/>
-      <subvertex xmi:type="uml:State" xmi:id="_rFVQgUJOEfC8Cv6QapW8jg" name="INITIAL"/>
-      <subvertex xmi:type="uml:State" xmi:id="_rFVQg0JOEfC8Cv6QapW8jg" name="NETWORK_CONFIGURATION"/>
+      <subvertex xmi:type="uml:State" xmi:id="_rFVQgUJOEfC8Cv6QapW8jg" name="INITIAL">
+        <ownedComment xmi:id="_7cleYEiGEfCItOe4N9qQKw">
+          <body>Initial State</body>
+        </ownedComment>
+        <doActivity xmi:type="uml:Activity" xmi:id="_JNFyIEiNEfCItOe4N9qQKw" name="Init_components"/>
+        <entry xmi:type="uml:Activity" xmi:id="_DT5KIEiNEfCItOe4N9qQKw" name="init"/>
+        <exit xmi:type="uml:Activity" xmi:id="_FTC-cEiNEfCItOe4N9qQKw" name="disable_initialization_functions"/>
+      </subvertex>
+      <subvertex xmi:type="uml:State" xmi:id="_rFVQg0JOEfC8Cv6QapW8jg" name="NETWORK_CONFIGURATION">
+        <doActivity xmi:type="uml:Activity" xmi:id="_PQnv8EiPEfCItOe4N9qQKw" name="start_network_configuration"/>
+        <entry xmi:type="uml:Activity" xmi:id="_PvrDcEiPEfCItOe4N9qQKw" name="network_configuration"/>
+        <exit xmi:type="uml:Activity" xmi:id="_QNaIUEiPEfCItOe4N9qQKw" name="save_network_ssid_password"/>
+      </subvertex>
       <subvertex xmi:type="uml:State" xmi:id="_rFVQhEJOEfC8Cv6QapW8jg" name="WAIT_ON_SYNCHRONIZATION"/>
-      <subvertex xmi:type="uml:State" xmi:id="_rFVQhUJOEfC8Cv6QapW8jg" name="READY"/>
+      <subvertex xmi:type="uml:State" xmi:id="_rFVQhUJOEfC8Cv6QapW8jg" name="READY">
+        <ownedComment xmi:id="__P7TgEiOEfCItOe4N9qQKw">
+          <body>Device is read to work state. User could perform action using buttons (service_mode) </body>
+        </ownedComment>
+      </subvertex>
       <subvertex xmi:type="uml:State" xmi:id="_rFVQhkJOEfC8Cv6QapW8jg" name="SERVICE_MODE"/>
       <subvertex xmi:type="uml:State" xmi:id="_rFVQh0JOEfC8Cv6QapW8jg" name="FIRMWARE_UPDATE"/>
       <subvertex xmi:type="uml:State" xmi:id="_rFVQiEJOEfC8Cv6QapW8jg" name="MEASUREMENT"/>
@@ -40,7 +95,28 @@
       <subvertex xmi:type="uml:State" xmi:id="_IFnI0EJPEfC8Cv6QapW8jg" name="COMMUNICATION_ERROR"/>
       <subvertex xmi:type="uml:State" xmi:id="_ILS6EEJPEfC8Cv6QapW8jg" name="EMERGENCY_TEST"/>
       <subvertex xmi:type="uml:State" xmi:id="_IQRgsEJPEfC8Cv6QapW8jg" name="EMERGENCY_RESET"/>
-      <subvertex xmi:type="uml:State" xmi:id="_IUkx4EJPEfC8Cv6QapW8jg" name="DIAGNOSTIC"/>
+      <subvertex xmi:type="uml:State" xmi:id="_IUkx4EJPEfC8Cv6QapW8jg" name="DIAGNOSTIC">
+        <entry xmi:type="uml:Activity" xmi:id="_5VnGoEiNEfCItOe4N9qQKw" name="Check_if_configuration_exists"/>
+      </subvertex>
     </region>
   </packagedElement>
+  <packagedElement xmi:type="uml:SignalEvent" xmi:id="_e9ANcEiIEfCItOe4N9qQKw" name="Init Complete" signal="_CSqeAEiKEfCItOe4N9qQKw">
+    <ownedComment xmi:id="_nAoTYEiNEfCItOe4N9qQKw">
+      <body>Init completed succesfull</body>
+    </ownedComment>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Signal" xmi:id="_CSqeAEiKEfCItOe4N9qQKw" name="Init_complete"/>
+  <packagedElement xmi:type="uml:CallEvent" xmi:id="_MvZQsEiMEfCItOe4N9qQKw" name="service_command" operation="_XazqgEiMEfCItOe4N9qQKw"/>
+  <packagedElement xmi:type="uml:CallEvent" xmi:id="_uhOzgEiMEfCItOe4N9qQKw" name="exit_maintanance" operation="_vP2NAEiMEfCItOe4N9qQKw"/>
+  <packagedElement xmi:type="uml:Activity" xmi:id="_We_igEiMEfCItOe4N9qQKw">
+    <ownedOperation xmi:id="_XazqgEiMEfCItOe4N9qQKw" name="service_command"/>
+    <ownedOperation xmi:id="_vP2NAEiMEfCItOe4N9qQKw" name="exit_maintanance"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:TimeEvent" xmi:id="_cRFngEiNEfCItOe4N9qQKw" name="after 5ms"/>
+  <packagedElement xmi:type="uml:SignalEvent" xmi:id="_St6LoEiOEfCItOe4N9qQKw" name="Firmware_update_avaiable" signal="_TYR-UEiOEfCItOe4N9qQKw">
+    <ownedComment xmi:id="_St6ysEiOEfCItOe4N9qQKw">
+      <body>Signal of avaiable firmware update</body>
+    </ownedComment>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Signal" xmi:id="_TYR-UEiOEfCItOe4N9qQKw" name="firmware_update_avaiable"/>
 </uml:Model>
