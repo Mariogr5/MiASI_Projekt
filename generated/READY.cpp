@@ -1,5 +1,4 @@
 #include "READY.hpp"
-#include "Context.hpp"
 #include <iostream>
 
 void READY::enter(Context& context) {
@@ -15,17 +14,30 @@ void READY::exit(Context& context) {
 }
 
 void READY::transition(Context& context) {
-    // Transition to SERVICE_MODE
-    context.setState(std::make_unique<SERVICE_MODE>()); 
+    std::cout << "Event: Firmware_update_avaiable" << std::endl;
+    // Checking if firmware update is avaiable
+    if (firmware_update_avaiable_guard(context)) {
+    	download_new_firmware(context);
+	    context.setState(std::make_unique<FIRMWARE_UPDATE>());
+	    return;
+    }
+    context.setState(std::make_unique<MEASUREMENT>());
     return;
-    // Transition to MEASUREMENT
-    context.setState(std::make_unique<MEASUREMENT>()); 
+    std::cout << "Event: service_command" << std::endl;
+    context.setState(std::make_unique<SERVICE_MODE>());
     return;
-    // Transition to FIRMWARE_UPDATE
-    context.setState(std::make_unique<FIRMWARE_UPDATE>()); 
-    return;
+    std::cout << "No valid transition from state: READY" << std::endl;
 }
 
 const char* READY::name() const {
     return "READY";
+}
+
+
+bool READY::firmware_update_avaiable_guard(Context& context) {
+    return context.get_firmware_update_avaiable() == true;
+}
+
+void READY::download_new_firmware(Context& context) {
+    std::cout << "Executing effect download_new_firmware" << std::endl;
 }

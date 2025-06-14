@@ -1,5 +1,4 @@
 #include "EMERGENCY_TEST.hpp"
-#include "Context.hpp"
 #include <iostream>
 
 void EMERGENCY_TEST::enter(Context& context) {
@@ -15,11 +14,14 @@ void EMERGENCY_TEST::exit(Context& context) {
 }
 
 void EMERGENCY_TEST::transition(Context& context) {
-    // Transition to INITIAL
-    context.setState(std::make_unique<INITIAL>()); 
+    context.setState(std::make_unique<INITIAL>());
     return;
+    std::cout << "No valid transition from state: EMERGENCY_TEST" << std::endl;
 }
 
 const char* EMERGENCY_TEST::name() const {
     return "EMERGENCY_TEST";
 }
+
+
+

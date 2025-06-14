@@ -1,15 +1,13 @@
-[comment encoding = UTF-8 /]
-[**
- * Generator for C++ classes from UML state machine model.
- */]
 [module generate('http://www.eclipse.org/uml2/5.0.0/UML')]
 
 [comment @main/]
 [template public generateElement(stateMachine : StateMachine)]
 
-[comment @main /]
+[comment @main/]
 [file ('State.hpp', false, 'UTF-8')]
 #pragma once
+#include <memory>
+
 class Context;
 
 class State {
@@ -23,23 +21,29 @@ public:
 };
 [/file]
 
-[comment @main /]
+[comment @main/]
 [file ('Context.hpp', false, 'UTF-8')]
 #pragma once
 #include <memory>
 #include <iostream>
+#include <chrono>
 #include "State.hpp"
 
 class Context {
 private:
     std::unique_ptr<State> currentState;
+    std::chrono::steady_clock::time_point stateStartTime;
+
+    bool missing_configuration = false;
+    bool firmware_update_avaiable = false;
 
 public:
     Context(std::unique_ptr<State> initialState)
-        : currentState(std::move(initialState)) {}
+        : currentState(std::move(initialState)), stateStartTime(std::chrono::steady_clock::now()) {}
 
     void setState(std::unique_ptr<State> newState) {
         currentState = std::move(newState);
+        stateStartTime = std::chrono::steady_clock::now();
     }
 
     void transition() {
@@ -49,19 +53,34 @@ public:
     void printState() const {
         std::cout << "Current state: " << currentState->name() << std::endl;
     }
+
+    bool get_missing_configuration() const { return missing_configuration; }
+    void set_missing_configuration(bool val) { missing_configuration = val; }
+
+    bool get_firmware_update_available() const { return firmware_update_avaiable; }
+    void set_firmware_update_available(bool val) { firmware_update_avaiable = val; }
+
+    bool isTimeElapsed(int milliseconds) const {
+        auto now = std::chrono::steady_clock::now();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(now - stateStartTime).count() >= milliseconds;
+    }
 };
 [/file]
 
 [for (state : State | stateMachine.region->collect(r | r.subvertex)->flatten()->filter(uml::State))]
 
-[comment @main /]
+[comment @main/]
 [file (state.name.concat('.hpp'), false, 'UTF-8')]
 #pragma once
 #include "State.hpp"
-[for (target : NamedElement | state.outgoing->filter(Transition)->collect(t | t.target)->asSet())]
+#include "Context.hpp"
+[for (target : NamedElement | state.outgoing->collect(t | t.target)->asSet())]
 #include "[target.name/].hpp"
 [/for]
 
+[if (not state.ownedComment->isEmpty())]
+// [state.ownedComment->asSequence()->first()._body/]
+[/if]
 class [state.name/] : public State {
 public:
     void enter(Context& context) override;
@@ -69,49 +88,124 @@ public:
     void exit(Context& context) override;
     void transition(Context& context) override;
     const char* name() const override;
+
+private:
+[if (not state.entry->isEmpty() and not state.entry.name.oclIsUndefined())]
+    void [state.entry.name/](Context& context);
+[/if]
+[if (not state.doActivity->isEmpty() and not state.doActivity.name.oclIsUndefined())]
+    void [state.doActivity.name/](Context& context);
+[/if]
+[if (not state.exit->isEmpty() and not state.exit.name.oclIsUndefined())]
+    void [state.exit.name/](Context& context);
+[/if]
+[for (t : Transition | state.outgoing->filter(Transition)->select(g | g.guard->notEmpty()))]
+    [if (not t.guard.ownedComment->isEmpty())]
+    // [t.guard.ownedComment->asSequence()->first()._body/]
+    [/if]
+    bool [t.guard.name/](Context& context);
+[/for]
+[for (t : Transition | state.outgoing->filter(Transition)->select(e | e.effect->notEmpty()))]
+    [if (not t.effect->asSequence()->first().ownedComment->isEmpty())]
+    // [t.effect->asSequence()->first().ownedComment->asSequence()->first()._body/]
+    [/if]
+    void [t.effect->asSequence()->first().name/](Context& context);
+[/for]
 };
 [/file]
 
-[comment @main /]
+[comment @main/]
 [file (state.name.concat('.cpp'), false, 'UTF-8')]
 #include "[state.name/].hpp"
-#include "Context.hpp"
 #include <iostream>
 
 void [state.name/]::enter(Context& context) {
     std::cout << "Entering state: [state.name/]" << std::endl;
+    [if (not state.entry->isEmpty() and not state.entry.name.oclIsUndefined())]
+    [state.entry.name/](context);
+    [/if]
 }
 
 void [state.name/]::doActivity(Context& context) {
     std::cout << "Executing activity in state: [state.name/]" << std::endl;
+    [if (not state.doActivity->isEmpty() and not state.doActivity.name.oclIsUndefined())]
+    [state.doActivity.name/](context);
+    [/if]
 }
 
 void [state.name/]::exit(Context& context) {
     std::cout << "Exiting state: [state.name/]" << std::endl;
+    [if (not state.exit->isEmpty() and not state.exit.name.oclIsUndefined())]
+    [state.exit.name/](context);
+    [/if]
 }
 
 void [state.name/]::transition(Context& context) {
-[for (t : Transition | state.outgoing->filter(Transition))]
-    // Transition to [t.target.name/]
-    [if (t.trigger->notEmpty())]
-    [for (tr : Trigger | t.trigger->asSequence()->first())]
-    // Trigger: [tr.name/]
-    [/for]
+[let transitions : Sequence(Transition) = state.outgoing->filter(Transition)->asSequence()]
+[for (t : Transition | transitions)]
+[for (trigger : Trigger | t.trigger)]
+    std::cout << "Event: [trigger.name/]" << std::endl;
+[/for]
+    [if (t.guard->notEmpty())]
+    [if (not t.ownedComment->isEmpty())]
+    // [t.ownedComment->asSequence()->first()._body/]
     [/if]
-    [if (t.target.oclIsTypeOf(FinalState))]
-    std::cout << "Reached final state. Terminating..." << std::endl;
-    exit(context);
-    std::exit(0);
+    if ([t.guard.name/](context)) {
+    	[if (t.effect->notEmpty())]
+    	[t.effect->asSequence()->first().name/](context);
+    [/if]
+	    context.setState(std::make_unique<[t.target.name/]>());
+	    return;
+    }
     [else]
-    context.setState(std::make_unique<[t.target.name/]>()); 
+    [if (not t.ownedComment->isEmpty())]
+    // [t.ownedComment->asSequence()->first()._body/]
+    [/if]
+    [if (t.effect->notEmpty())]
+    	effect_[t.target.name/](context);
+	    context.setState(std::make_unique<[t.target.name/]>());
+	    return;
+	[else]
+    context.setState(std::make_unique<[t.target.name/]>());
     return;
     [/if]
+    [/if]
 [/for]
+[/let]
+    std::cout << "No valid transition from state: [state.name/]" << std::endl;
 }
 
 const char* [state.name/]::name() const {
     return "[state.name/]";
 }
+
+[if (not state.entry->isEmpty() and not state.entry.name.oclIsUndefined())]
+void [state.name/]::[state.entry.name/](Context& context) {
+    std::cout << "Executing [state.entry.name/]" << std::endl;
+}
+[/if]
+[if (not state.doActivity->isEmpty() and not state.doActivity.name.oclIsUndefined())]
+void [state.name/]::[state.doActivity.name/](Context& context) {
+    std::cout << "Executing [state.doActivity.name/]" << std::endl;
+}
+[/if]
+[if (not state.exit->isEmpty() and not state.exit.name.oclIsUndefined())]
+void [state.name/]::[state.exit.name/](Context& context) {
+    std::cout << "Executing [state.exit.name/]" << std::endl;
+}
+[/if]
+
+[for (t : Transition | state.outgoing->filter(Transition)->select(g | g.guard->notEmpty()))]
+bool [state.name/]::[t.guard.name/](Context& context) {
+    return context.get_[t.guard.specification.oclAsType(OpaqueExpression)._body->first().replaceAll('==', '() == ')/];
+}
+[/for]
+
+[for (t : Transition | state.outgoing->filter(Transition)->select(e | e.effect->notEmpty()))]
+void [state.name/]::[t.effect->asSequence()->first().name/](Context& context) {
+    std::cout << "Executing effect [t.effect->asSequence()->first().name/]" << std::endl;
+}
+[/for]
 [/file]
 
 [/for]

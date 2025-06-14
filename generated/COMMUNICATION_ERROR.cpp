@@ -1,5 +1,4 @@
 #include "COMMUNICATION_ERROR.hpp"
-#include "Context.hpp"
 #include <iostream>
 
 void COMMUNICATION_ERROR::enter(Context& context) {
@@ -15,11 +14,14 @@ void COMMUNICATION_ERROR::exit(Context& context) {
 }
 
 void COMMUNICATION_ERROR::transition(Context& context) {
-    // Transition to EMERGENCY_RESET
-    context.setState(std::make_unique<EMERGENCY_RESET>()); 
+    context.setState(std::make_unique<EMERGENCY_RESET>());
     return;
+    std::cout << "No valid transition from state: COMMUNICATION_ERROR" << std::endl;
 }
 
 const char* COMMUNICATION_ERROR::name() const {
     return "COMMUNICATION_ERROR";
 }
+
+
+

@@ -1,5 +1,6 @@
 #pragma once
 #include "State.hpp"
+#include "Context.hpp"
 #include "READY.hpp"
 
 class SERVICE_MODE : public State {
@@ -9,4 +10,6 @@ public:
     void exit(Context& context) override;
     void transition(Context& context) override;
     const char* name() const override;
+
+private:
 };

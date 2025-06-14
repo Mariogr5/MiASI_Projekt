@@ -1,5 +1,4 @@
 #include "DEVICE_ERROR.hpp"
-#include "Context.hpp"
 #include <iostream>
 
 void DEVICE_ERROR::enter(Context& context) {
@@ -15,11 +14,14 @@ void DEVICE_ERROR::exit(Context& context) {
 }
 
 void DEVICE_ERROR::transition(Context& context) {
-    // Transition to EMERGENCY_TEST
-    context.setState(std::make_unique<EMERGENCY_TEST>()); 
+    context.setState(std::make_unique<EMERGENCY_TEST>());
     return;
+    std::cout << "No valid transition from state: DEVICE_ERROR" << std::endl;
 }
 
 const char* DEVICE_ERROR::name() const {
     return "DEVICE_ERROR";
 }
+
+
+

@@ -1,5 +1,6 @@
 #pragma once
 #include "State.hpp"
+#include "Context.hpp"
 #include "COMMUNICATION_ERROR.hpp"
 #include "READY.hpp"
 
@@ -10,4 +11,6 @@ public:
     void exit(Context& context) override;
     void transition(Context& context) override;
     const char* name() const override;
+
+private:
 };

@@ -1,5 +1,4 @@
 #include "MEASUREMENT.hpp"
-#include "Context.hpp"
 #include <iostream>
 
 void MEASUREMENT::enter(Context& context) {
@@ -15,11 +14,14 @@ void MEASUREMENT::exit(Context& context) {
 }
 
 void MEASUREMENT::transition(Context& context) {
-    // Transition to RESULT_SAVING
-    context.setState(std::make_unique<RESULT_SAVING>()); 
+    context.setState(std::make_unique<RESULT_SAVING>());
     return;
+    std::cout << "No valid transition from state: MEASUREMENT" << std::endl;
 }
 
 const char* MEASUREMENT::name() const {
     return "MEASUREMENT";
 }
+
+
+

@@ -1,5 +1,6 @@
 #pragma once
 #include "State.hpp"
+#include "Context.hpp"
 
 class EMERGENCY_RESET : public State {
 public:
@@ -8,4 +9,6 @@ public:
     void exit(Context& context) override;
     void transition(Context& context) override;
     const char* name() const override;
+
+private:
 };

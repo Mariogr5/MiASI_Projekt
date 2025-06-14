@@ -1,5 +1,4 @@
 #include "DATA_TRANSMISSION.hpp"
-#include "Context.hpp"
 #include <iostream>
 
 void DATA_TRANSMISSION::enter(Context& context) {
@@ -15,14 +14,16 @@ void DATA_TRANSMISSION::exit(Context& context) {
 }
 
 void DATA_TRANSMISSION::transition(Context& context) {
-    // Transition to READY
-    context.setState(std::make_unique<READY>()); 
+    context.setState(std::make_unique<COMMUNICATION_ERROR>());
     return;
-    // Transition to COMMUNICATION_ERROR
-    context.setState(std::make_unique<COMMUNICATION_ERROR>()); 
+    context.setState(std::make_unique<READY>());
     return;
+    std::cout << "No valid transition from state: DATA_TRANSMISSION" << std::endl;
 }
 
 const char* DATA_TRANSMISSION::name() const {
     return "DATA_TRANSMISSION";
 }
+
+
+

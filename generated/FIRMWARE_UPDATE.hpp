@@ -1,7 +1,8 @@
 #pragma once
 #include "State.hpp"
-#include "EMERGENCY_TEST.hpp"
+#include "Context.hpp"
 #include "DEVICE_ERROR.hpp"
+#include "EMERGENCY_TEST.hpp"
 
 class FIRMWARE_UPDATE : public State {
 public:
@@ -10,4 +11,6 @@ public:
     void exit(Context& context) override;
     void transition(Context& context) override;
     const char* name() const override;
+
+private:
 };
