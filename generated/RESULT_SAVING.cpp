@@ -14,9 +14,9 @@ void RESULT_SAVING::exit(Context& context) {
 }
 
 void RESULT_SAVING::transition(Context& context) {
-    context.setState(std::make_unique<DATA_TRANSMISSION>());
-    return;
     context.setState(std::make_unique<DEVICE_ERROR>());
+    return;
+    context.setState(std::make_unique<DATA_TRANSMISSION>());
     return;
     std::cout << "No valid transition from state: RESULT_SAVING" << std::endl;
 }

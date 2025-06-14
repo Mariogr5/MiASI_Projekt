@@ -1,5 +1,77 @@
 [module generate('http://www.eclipse.org/uml2/5.0.0/UML')]
 
+[query public toScreamingSnakeCase(input : String) : String =
+	if (input.trim() = '') then
+        ''
+    else
+        let cleanedInput : String = input.trim().replaceAll(' {1,}', '_').replaceAll('_{2,}', '_') in
+        let words : Sequence(String) = 
+            if (cleanedInput.contains('_')) then
+                cleanedInput.tokenize('_')->select(w | w <> '')
+            else
+                cleanedInput->collect(c | 
+                    if (c.toString().toUpperCase() = c.toString() and c.toString().matches('[A-Z]')) then
+                        '_' + c.toString()
+                    else
+                        c.toString()
+                    endif
+                )->toString().replaceAll('([a-z])([A-Z])', '$1_$2').tokenize('_')->select(w | w <> '')
+            endif
+        in
+        if (words->isEmpty()) then
+            ''
+        else
+            words->collect(w | w.toUpperCase())->sep('_')
+        endif
+    endif	
+/]
+
+[query public toCamelCase(input : String) : String =
+	if (input.trim() = '') then
+		''
+	else
+		let cleanedInput : String = input.trim().replaceAll(' {1,}', '_').replaceAll('_{2,}', '_') in
+		let words : Sequence(String) = cleanedInput.tokenize('_')->select(w | not w.oclIsUndefined() and w.trim() <> '') in
+		if (words->isEmpty()) then
+			input.trim().toLowerFirst()
+		else
+			let firstWord : String = words->first().toLowerFirst() in
+			let otherWords : Sequence(String) = words->subSequence(2, words->size()) in
+			firstWord +
+			otherWords->collect(word |
+				if (word.size() > 0) then
+					word.substring(1,1).toUpperCase() +
+					word.substring(2, word.size()).toLower()
+				else
+					''
+				endif
+			)->sep('')
+		endif
+	endif
+/]
+
+[query public parseExpression(expr : OpaqueExpression) : Sequence(String) =
+	if (expr._body->first().trim() = '') then
+        Sequence{}
+	else
+	    let cleanedExpr : String = expr._body->first().trim() in
+	    let operators : Sequence(String) = Sequence{'==', '!=', '>=', '<=', '>', '<'} in
+	    let matchedOperator : String = operators->select(op | cleanedExpr.contains(op))->first() in
+	    if (matchedOperator <> null and cleanedExpr.tokenize(matchedOperator)->size() = 2) then
+	        let parts : Sequence(String) = cleanedExpr.tokenize(matchedOperator) in
+	        let param : String = parts->first().trim() in
+	        let val : String = parts->at(2).trim() in
+	        if (param <> '' and val <> '') then
+	            Sequence{param, matchedOperator, val}
+	        else
+	            Sequence{}
+	        endif
+	    else
+	        Sequence{}
+	    endif
+	endif
+/]
+
 [comment @main/]
 [template public generateElement(stateMachine : StateMachine)]
 
@@ -16,9 +88,23 @@ public:
     virtual void enter(Context& context) = 0;
     virtual void doActivity(Context& context) = 0;
     virtual void exit(Context& context) = 0;
-    virtual void transition(Context& context) = 0;
     virtual const char* name() const = 0;
 };
+[/file]
+
+[comment @main/]
+[file ('Event.hpp', false, 'UTF-8')]
+#pragma once
+
+public enum class Event {
+	NONE_EVENT,
+	[for (event: Event | Model.allInstances()->collect(e | e.packagedElement)->flatten()
+		->filter(uml::Event)->select(e | e.name <> '')
+	)]
+	[event.eClass().name.toScreamingSnakeCase()/]_[event.name.toScreamingSnakeCase()/],
+	[/for]
+};
+
 [/file]
 
 [comment @main/]
@@ -46,10 +132,6 @@ public:
         stateStartTime = std::chrono::steady_clock::now();
     }
 
-    void transition() {
-        currentState->transition(*this);
-    }
-
     void printState() const {
         std::cout << "Current state: " << currentState->name() << std::endl;
     }
@@ -65,6 +147,47 @@ public:
         return std::chrono::duration_cast<std::chrono::milliseconds>(now - stateStartTime).count() >= milliseconds;
     }
 };
+[/file]
+
+[comment @main/]
+[file ('Transition.hpp', false, 'UTF-8')]
+#pragma once
+#include "Context.hpp"
+#include "Event.hpp"
+#include "State.hpp"
+
+class Transition {
+public:
+	State *from;
+	State *to;
+	Event trigger;
+	bool (*guard)(Context&);
+	void (*activity)(Context&);
+	
+	~Transition() = default;
+	Transition(State *_from, State *_to, Event _trigger = Event::NONE_EVENT, bool (*_guard)(Context&) = nullptr), void (*_activity(Context&) = nullptr
+        : from(_from), to(_to), trigger(_trigger), guard(_guard), activity(_activity) {}
+};
+[/file]
+
+[comment @main/]
+[file ('Guard.hpp', false, 'UTF-8')]
+#include "Context.hpp"
+
+namespace Guard {
+	[for (constraint : Constraint | stateMachine.region->collect(r | r.transition)->flatten()
+    	->collect(t | t.ownedRule)->flatten()
+	)]
+	[let parts: Sequence(String) = constraint->collect(c | c.specification)->flatten()
+		->filter(OpaqueExpression)->asSequence()->first().parseExpression()
+	]
+	[if (parts->size() > 1)]
+	bool [constraint.name.toCamelCase()/](Context& ctx) { return ctx.[Sequence{parts->at(1).toCamelCase(), parts->at(2), parts->at(3)}->sep(' ')/]; }
+	[/if]
+	[/let]
+	[/for]
+};
+
 [/file]
 
 [for (state : State | stateMachine.region->collect(r | r.subvertex)->flatten()->filter(uml::State))]
@@ -83,10 +206,10 @@ public:
 [/if]
 class [state.name/] : public State {
 public:
-    void enter(Context& context) override;
-    void doActivity(Context& context) override;
-    void exit(Context& context) override;
-    void transition(Context& context) override;
+    void enter(Context& ctx) override;
+    void doActivity(Context& ctx) override;
+    void exit(Context& ctx) override;
+    void transition(Context& ctx) override;
     const char* name() const override;
 
 private:

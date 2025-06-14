@@ -21,10 +21,6 @@ public:
         stateStartTime = std::chrono::steady_clock::now();
     }
 
-    void transition() {
-        currentState->transition(*this);
-    }
-
     void printState() const {
         std::cout << "Current state: " << currentState->name() << std::endl;
     }

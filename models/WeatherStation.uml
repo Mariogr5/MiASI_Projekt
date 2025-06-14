@@ -35,13 +35,13 @@
         <ownedComment xmi:id="_54EeAEiOEfCItOe4N9qQKw">
           <body>Checking if firmware update is avaiable</body>
         </ownedComment>
-        <ownedRule xmi:id="_iERRoEiOEfCItOe4N9qQKw" name="firmware_update_avaiable_guard">
+        <ownedRule xmi:id="_iERRoEiOEfCItOe4N9qQKw" name="firmware_update_available_guard">
           <specification xmi:type="uml:OpaqueExpression" xmi:id="_maj8cEiOEfCItOe4N9qQKw">
-            <body>firmware_update_avaiable==true</body>
+            <body>firmware_update_available==true</body>
           </specification>
         </ownedRule>
         <effect xmi:type="uml:Activity" xmi:id="_yXqAkEiOEfCItOe4N9qQKw" name="download_new_firmware"/>
-        <trigger xmi:id="_ek0vQEiOEfCItOe4N9qQKw" name="Firmware_update_avaiable" event="_St6LoEiOEfCItOe4N9qQKw"/>
+        <trigger xmi:id="_ek0vQEiOEfCItOe4N9qQKw" name="Firmware_update_avaliable" event="_St6LoEiOEfCItOe4N9qQKw"/>
       </transition>
       <transition xmi:id="_v3lCEEJPEfC8Cv6QapW8jg" source="_rFVQg0JOEfC8Cv6QapW8jg" target="_rFVQhEJOEfC8Cv6QapW8jg"/>
       <transition xmi:id="_v818kEJPEfC8Cv6QapW8jg" source="_rFVQhEJOEfC8Cv6QapW8jg" target="_IFnI0EJPEfC8Cv6QapW8jg"/>
@@ -100,7 +100,7 @@
       </subvertex>
     </region>
   </packagedElement>
-  <packagedElement xmi:type="uml:SignalEvent" xmi:id="_e9ANcEiIEfCItOe4N9qQKw" name="Init Complete" signal="_CSqeAEiKEfCItOe4N9qQKw">
+  <packagedElement xmi:type="uml:SignalEvent" xmi:id="_e9ANcEiIEfCItOe4N9qQKw" name="init_complete" signal="_CSqeAEiKEfCItOe4N9qQKw">
     <ownedComment xmi:id="_nAoTYEiNEfCItOe4N9qQKw">
       <body>Init completed succesfull</body>
     </ownedComment>
@@ -113,10 +113,10 @@
     <ownedOperation xmi:id="_vP2NAEiMEfCItOe4N9qQKw" name="exit_maintanance"/>
   </packagedElement>
   <packagedElement xmi:type="uml:TimeEvent" xmi:id="_cRFngEiNEfCItOe4N9qQKw" name="after 5ms"/>
-  <packagedElement xmi:type="uml:SignalEvent" xmi:id="_St6LoEiOEfCItOe4N9qQKw" name="Firmware_update_avaiable" signal="_TYR-UEiOEfCItOe4N9qQKw">
+  <packagedElement xmi:type="uml:SignalEvent" xmi:id="_St6LoEiOEfCItOe4N9qQKw" name="firmware_update_available" signal="_TYR-UEiOEfCItOe4N9qQKw">
     <ownedComment xmi:id="_St6ysEiOEfCItOe4N9qQKw">
       <body>Signal of avaiable firmware update</body>
     </ownedComment>
   </packagedElement>
-  <packagedElement xmi:type="uml:Signal" xmi:id="_TYR-UEiOEfCItOe4N9qQKw" name="firmware_update_avaiable"/>
+  <packagedElement xmi:type="uml:Signal" xmi:id="_TYR-UEiOEfCItOe4N9qQKw" name="firmware_update_available"/>
 </uml:Model>

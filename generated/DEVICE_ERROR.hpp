@@ -5,10 +5,10 @@
 
 class DEVICE_ERROR : public State {
 public:
-    void enter(Context& context) override;
-    void doActivity(Context& context) override;
-    void exit(Context& context) override;
-    void transition(Context& context) override;
+    void enter(Context& ctx) override;
+    void doActivity(Context& ctx) override;
+    void exit(Context& ctx) override;
+    void transition(Context& ctx) override;
     const char* name() const override;
 
 private:

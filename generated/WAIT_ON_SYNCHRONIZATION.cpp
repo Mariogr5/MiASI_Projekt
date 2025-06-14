@@ -14,10 +14,10 @@ void WAIT_ON_SYNCHRONIZATION::exit(Context& context) {
 }
 
 void WAIT_ON_SYNCHRONIZATION::transition(Context& context) {
+    context.setState(std::make_unique<COMMUNICATION_ERROR>());
+    return;
     std::cout << "Event: synchronization_ended" << std::endl;
     context.setState(std::make_unique<READY>());
-    return;
-    context.setState(std::make_unique<COMMUNICATION_ERROR>());
     return;
     std::cout << "No valid transition from state: WAIT_ON_SYNCHRONIZATION" << std::endl;
 }
