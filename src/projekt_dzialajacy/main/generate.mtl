@@ -72,6 +72,27 @@
 	endif
 /]
 
+[query public asCppType(input: String) : String =
+	if (input.trim() = '') then
+		''
+	else
+		let cleanedInput : String = input.trim() in
+		if cleanedInput.toLower() = 'true' or cleanedInput.toLower() = 'false' then
+			'bool'
+		else
+			if cleanedInput.matches('^[+-]?\\d+$') then
+		    	'int'
+			else 
+				if cleanedInput.matches('^[+-]?(?:\\d*\\.\\d+|\\d+\\.\\d*)(?:[eE][+-]?\\d+)?$') then
+		    		'float'
+				else
+					'std::string'
+				endif
+			endif
+		endif
+	endif
+/]
+
 [comment @main/]
 [template public generateElement(stateMachine : StateMachine)]
 
@@ -79,8 +100,6 @@
 [file ('State.hpp', false, 'UTF-8')]
 #pragma once
 #include <memory>
-
-class Context;
 
 class State {
 public:
@@ -110,43 +129,34 @@ public enum class Event {
 [comment @main/]
 [file ('Context.hpp', false, 'UTF-8')]
 #pragma once
-#include <memory>
-#include <iostream>
-#include <chrono>
-#include "State.hpp"
+#include <string>
 
+[let expressions : Sequence(OpaqueExpression) = stateMachine.region->collect(r | r.transition)->flatten()
+		->collect(t | t.ownedRule)->flatten()->collect(c | c.specification)->flatten()
+		->filter(OpaqueExpression)->flatten()->asSequence()
+]
+[if (expressions->select(e | e.parseExpression()->size() = 3)->size() = 0)]
+class Context;
+[else]
 class Context {
-private:
-    std::unique_ptr<State> currentState;
-    std::chrono::steady_clock::time_point stateStartTime;
-
-    bool missing_configuration = false;
-    bool firmware_update_avaiable = false;
-
 public:
-    Context(std::unique_ptr<State> initialState)
-        : currentState(std::move(initialState)), stateStartTime(std::chrono::steady_clock::now()) {}
-
-    void setState(std::unique_ptr<State> newState) {
-        currentState = std::move(newState);
-        stateStartTime = std::chrono::steady_clock::now();
-    }
-
-    void printState() const {
-        std::cout << "Current state: " << currentState->name() << std::endl;
-    }
-
-    bool get_missing_configuration() const { return missing_configuration; }
-    void set_missing_configuration(bool val) { missing_configuration = val; }
-
-    bool get_firmware_update_available() const { return firmware_update_avaiable; }
-    void set_firmware_update_available(bool val) { firmware_update_avaiable = val; }
-
-    bool isTimeElapsed(int milliseconds) const {
-        auto now = std::chrono::steady_clock::now();
-        return std::chrono::duration_cast<std::chrono::milliseconds>(now - stateStartTime).count() >= milliseconds;
-    }
-};
+	[let validNames : OrderedSet(String) = expressions
+		->select(e | e.parseExpression()->at(3).asCppType() <> '')
+		->collect(e | e.parseExpression()->at(1).toCamelCase())->asOrderedSet()
+	]
+	[for (name : String | validNames)]
+	[let matchingExpr : OpaqueExpression = expressions
+		-> select(e | e.parseExpression()->at(3).asCppType() <> '' and e.parseExpression()->at(1).toCamelCase() = name)
+		->first()
+	]
+	[matchingExpr.parseExpression()->at(3).asCppType()/] [name/];
+	[/let]
+	[/for]
+	// You can declare rest important attributes and methods here.
+	[/let]
+}
+[/if]
+[/let]
 [/file]
 
 [comment @main/]

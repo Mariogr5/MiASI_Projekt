@@ -1,8 +1,6 @@
 #pragma once
 #include <memory>
 
-class Context;
-
 class State {
 public:
     virtual ~State() = default;
