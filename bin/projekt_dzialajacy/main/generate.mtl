@@ -111,15 +111,24 @@
 [comment @main/]
 [file ('State.hpp', false, 'UTF-8')]
 #pragma once
-#include <memory>
 
 class State {
+protected:
+	const char *name;
 public:
+	explicit State(const char* _name) : name(_name) {}
     virtual ~State() = default;
-    virtual void enter(Context& context) = 0;
-    virtual void doActivity(Context& context) = 0;
-    virtual void exit(Context& context) = 0;
-    virtual const char* name() const = 0;
+    virtual void enter(Context &ctx) = 0;
+    virtual void doActivity(Context &ctx) = 0;
+    virtual void exit(Context &ctx) = 0;
+    const char *name() const { return name; }
+};
+
+class PseudoState : public State {
+public:
+	void enter(Context &ctx) override { return; }
+	void doActivity(Context &ctx) override { return; }
+	void exit(Context &ctx) override { return; }
 };
 [/file]
 
@@ -228,7 +237,6 @@ public:
     void enter(Context& ctx) override;
     void doActivity(Context& ctx) override;
     void exit(Context& ctx) override;
-    const char* name() const override;
 };
 [/file]
 
@@ -238,12 +246,12 @@ public:
 #include <iostream>
 
 [if (not state.entry->isEmpty() and not state.entry.name.oclIsUndefined())]
-void [state.name.toCamelCase().toUpperFirst()/]::enter(Context& context) {
+void [state.name.toCamelCase().toUpperFirst()/]::enter(Context& ctx) {
 	std::cout << "Entering state: " << name() << std::endl;
     // Your code for [state.entry.name.toScreamingSnakeCase()/] goes here.
 }
 [else]
-void [state.name.toCamelCase().toUpperFirst()/]::enter(Context& context) { return; }
+void [state.name.toCamelCase().toUpperFirst()/]::enter(Context& ctx) { return; }
 [/if]
 
 [if (not state.doActivity->isEmpty() and not state.doActivity.name.oclIsUndefined())]
@@ -256,20 +264,125 @@ void [state.name.toCamelCase().toUpperFirst()/]::doActivity(Context& context) { 
 [/if]
 
 [if (not state.exit->isEmpty() and not state.exit.name.oclIsUndefined())]
-void [state.name/]::exit(Context& context) {
+void [state.name/]::exit(Context& ctx) {
 	std::cout << "Exiting state: " << name() << std::endl;
     // Your code for [state.exit.name.toScreamingSnakeCase()/] goes here.
 }
 [else]
-void [state.name.toCamelCase().toUpperFirst()/]::exit(Context& context) { return; }
+void [state.name.toCamelCase().toUpperFirst()/]::exit(Context& ctx) { return; }
 [/if]
-
-const char* [state.name.toCamelCase().toUpperFirst()/]::name() const {
-    return "[state.name/]";
-}
 
 [/file]
 
 [/for]
+
+[comment @main/]
+[file ('StateMachine.hpp', false, 'UTF-8')]
+#pragma once
+#include <vector>
+#include "Context.hpp"
+#include "State.hpp"
+#include "Transition.hpp"
+#include "Guard.hpp"
+#include "Event.hpp"
+[for (state : State | stateMachine.region->collect(r | r.subvertex)->flatten()->filter(uml::State))]
+#include "[state.name.toCamelCase().toUpperFirst()/].hpp"
+[/for]
+
+class StateMachine {
+public:
+	State *state;
+	Context ctx;
+	std::vector<State*> states;
+	std::vector<Transition*> transitions;
+	
+	~StateMachine() = default;
+	StateMachine() {
+		[let start : Pseudostate = stateMachine.region->collect(r | r.subvertex)
+			->filter(uml::Pseudostate)->select(s | s.kind.toString() = 'initial')->asSequence()->first()
+		]
+		State *[start.name.toCamelCase()/] = new PseudoState("[start.name/]");
+		state = [start.name.toCamelCase()/];
+		states.push_back([start.name.toCamelCase()/]);
+		[/let]
+
+		[for (state : State | stateMachine.region->collect(r | r.subvertex)->flatten()->filter(uml::State))]
+		State *[state.name.toCamelCase()/] = new State("[state.name/]");
+		states.push_back([state.name.toCamelCase()/]);
+		[/for]
+		
+		transitions.assign({
+			[for (transition : Transition | stateMachine.region->collect(r | r.transition)->flatten())]
+			[let triggers : Sequence(uml::Trigger) = transition->collect(t | t.trigger)->asSequence()
+			]
+			[let trigger : String = if (
+					not triggers->isEmpty()
+					and not triggers->first().event.oclIsUndefined()
+					and triggers->first().event.name <> ''
+				) then
+				'Event::' + triggers->first().event.eClass().name.toScreamingSnakeCase() + '_' +
+					triggers->first().event.name.toScreamingSnakeCase()
+				else
+				'Event::NONE_EVENT'
+				endif
+			]
+			[let constraints : Sequence(uml::Constraint) = transition->collect(t | t.ownedRule)->asSequence()]
+			[let guard : String = if (
+				not constraints->isEmpty()
+				and not constraints->first()->collect(c | c.specification)->filter(OpaqueExpression)->asSequence()
+					->first().parseExpression()->isEmpty()
+				) then
+					'Guard::' + constraints->first().name.toCamelCase()
+				else
+				'nullptr'
+				endif
+			]
+			new Transition([transition.source.name.toCamelCase()/], [transition.target.name.toCamelCase()/], [trigger/], [guard/], nullptr),
+			[/let]
+			[/let]
+			[/let]
+			[/let]
+			[/for]
+		});
+	}
+
+	int execute(Event event) {
+		// RC 0 -> transition successfully done.
+		// RC 1 -> no transitions from current state.
+		// RC 2 -> transition blocked by guard.
+		// RC 3 -> trigger does not match.
+		int rc = 1;
+		std::vector<Transition*> outgoing;
+		for (auto* t : transitions) {
+    		if (t->from == state) {
+        		outgoing.push_back(t);
+    		}
+		}
+		if (outgoing.empty()) {
+			return rc;
+		}
+		
+		for (auto* t : outgoing) {
+		    if (t->trigger != Event::NONE_EVENT && t->trigger != event) {
+				rc = 3;
+				continue;
+			}
+		    if (t->guard && !t->guard(*ctx)) {
+				rc = 2;
+				continue;
+			}
+
+		    state->exit(*ctx);
+		    if (t->activity) t->activity(*ctx);
+		    state = t->to;
+		    state->enter(*ctx);
+		    state->doActivity(*ctx);
+		    rc = 0;
+			break;
+		}
+		return rc;
+	}
+};
+[/file]
 
 [/template]

@@ -1,13 +1,9 @@
 #include "FirmwareUpdate.hpp"
 #include <iostream>
 
-void FirmwareUpdate::enter(Context& context) { return; }
+void FirmwareUpdate::enter(Context& ctx) { return; }
 
 void FirmwareUpdate::doActivity(Context& context) { return; }
 
-void FirmwareUpdate::exit(Context& context) { return; }
-
-const char* FirmwareUpdate::name() const {
-    return "FIRMWARE_UPDATE";
-}
+void FirmwareUpdate::exit(Context& ctx) { return; }
 

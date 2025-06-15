@@ -1,7 +1,7 @@
 #include "Initial.hpp"
 #include <iostream>
 
-void Initial::enter(Context& context) {
+void Initial::enter(Context& ctx) {
 	std::cout << "Entering state: " << name() << std::endl;
     // Your code for INIT goes here.
 }
@@ -11,12 +11,8 @@ void Initial::doActivity(Context& context) {
     // Your code for INIT_COMPONENTS goes here.
 }
 
-void INITIAL::exit(Context& context) {
+void INITIAL::exit(Context& ctx) {
 	std::cout << "Exiting state: " << name() << std::endl;
     // Your code for DISABLE_INITIALIZATION_FUNCTIONS goes here.
-}
-
-const char* Initial::name() const {
-    return "INITIAL";
 }
 
