@@ -1,27 +1,13 @@
-#include "MEASUREMENT.hpp"
+#include "Measurement.hpp"
 #include <iostream>
 
-void MEASUREMENT::enter(Context& context) {
-    std::cout << "Entering state: MEASUREMENT" << std::endl;
-}
+void Measurement::enter(Context& context) { return; }
 
-void MEASUREMENT::doActivity(Context& context) {
-    std::cout << "Executing activity in state: MEASUREMENT" << std::endl;
-}
+void Measurement::doActivity(Context& context) { return; }
 
-void MEASUREMENT::exit(Context& context) {
-    std::cout << "Exiting state: MEASUREMENT" << std::endl;
-}
+void Measurement::exit(Context& context) { return; }
 
-void MEASUREMENT::transition(Context& context) {
-    context.setState(std::make_unique<RESULT_SAVING>());
-    return;
-    std::cout << "No valid transition from state: MEASUREMENT" << std::endl;
-}
-
-const char* MEASUREMENT::name() const {
+const char* Measurement::name() const {
     return "MEASUREMENT";
 }
-
-
 

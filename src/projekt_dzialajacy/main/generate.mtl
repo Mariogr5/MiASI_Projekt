@@ -4,7 +4,9 @@
 	if (input.trim() = '') then
         ''
     else
-        let cleanedInput : String = input.trim().replaceAll(' {1,}', '_').replaceAll('_{2,}', '_') in
+        let cleanedInput : String = input.trim()
+			.replaceAll(' {1,}', '_')
+			.replaceAll('_{2,}', '_') in
         let words : Sequence(String) = 
             if (cleanedInput.contains('_')) then
                 cleanedInput.tokenize('_')->select(w | w <> '')
@@ -30,23 +32,33 @@
 	if (input.trim() = '') then
 		''
 	else
-		let cleanedInput : String = input.trim().replaceAll(' {1,}', '_').replaceAll('_{2,}', '_') in
-		let words : Sequence(String) = cleanedInput.tokenize('_')->select(w | not w.oclIsUndefined() and w.trim() <> '') in
-		if (words->isEmpty()) then
-			input.trim().toLowerFirst()
+		let cleanedInput : String = input.trim()
+			.replaceAll(' {1,}', '_')
+			.replaceAll('_{2,}', '_')
+		in
+		let words : Sequence(String) = cleanedInput
+			.tokenize('_')
+			->select(w | not w.oclIsUndefined() and w.trim() <> '')
+		in
+		if (words->size() = 0) then
+			''
+		else if (words->size() = 1) then
+			words->first().toLower()
 		else
-			let firstWord : String = words->first().toLowerFirst() in
+			let firstWord : String = words->first().toLower() in
 			let otherWords : Sequence(String) = words->subSequence(2, words->size()) in
 			firstWord +
 			otherWords->collect(word |
-				if (word.size() > 0) then
+				if (word.size() = 0) then
+					''
+				else if (word.size() = 1) then
+					word.toUpperCase()
+				else
 					word.substring(1,1).toUpperCase() +
 					word.substring(2, word.size()).toLower()
-				else
-					''
-				endif
-			)->sep('')
-		endif
+				endif endif
+			)->iterate(word; result : String = '' | result + word)
+		endif endif
 	endif
 /]
 
@@ -203,142 +215,59 @@ namespace Guard {
 [for (state : State | stateMachine.region->collect(r | r.subvertex)->flatten()->filter(uml::State))]
 
 [comment @main/]
-[file (state.name.concat('.hpp'), false, 'UTF-8')]
+[file (state.name.toCamelCase().toUpperFirst().concat('.hpp'), false, 'UTF-8')]
 #pragma once
 #include "State.hpp"
 #include "Context.hpp"
-[for (target : NamedElement | state.outgoing->collect(t | t.target)->asSet())]
-#include "[target.name/].hpp"
-[/for]
 
 [if (not state.ownedComment->isEmpty())]
 // [state.ownedComment->asSequence()->first()._body/]
 [/if]
-class [state.name/] : public State {
+class [state.name.toCamelCase().toUpperFirst()/] : public State {
 public:
     void enter(Context& ctx) override;
     void doActivity(Context& ctx) override;
     void exit(Context& ctx) override;
-    void transition(Context& ctx) override;
     const char* name() const override;
-
-private:
-[if (not state.entry->isEmpty() and not state.entry.name.oclIsUndefined())]
-    void [state.entry.name/](Context& context);
-[/if]
-[if (not state.doActivity->isEmpty() and not state.doActivity.name.oclIsUndefined())]
-    void [state.doActivity.name/](Context& context);
-[/if]
-[if (not state.exit->isEmpty() and not state.exit.name.oclIsUndefined())]
-    void [state.exit.name/](Context& context);
-[/if]
-[for (t : Transition | state.outgoing->filter(Transition)->select(g | g.guard->notEmpty()))]
-    [if (not t.guard.ownedComment->isEmpty())]
-    // [t.guard.ownedComment->asSequence()->first()._body/]
-    [/if]
-    bool [t.guard.name/](Context& context);
-[/for]
-[for (t : Transition | state.outgoing->filter(Transition)->select(e | e.effect->notEmpty()))]
-    [if (not t.effect->asSequence()->first().ownedComment->isEmpty())]
-    // [t.effect->asSequence()->first().ownedComment->asSequence()->first()._body/]
-    [/if]
-    void [t.effect->asSequence()->first().name/](Context& context);
-[/for]
 };
 [/file]
 
 [comment @main/]
-[file (state.name.concat('.cpp'), false, 'UTF-8')]
-#include "[state.name/].hpp"
+[file (state.name.toCamelCase().toUpperFirst().concat('.cpp'), false, 'UTF-8')]
+#include "[state.name.toCamelCase().toUpperFirst()/].hpp"
 #include <iostream>
 
-void [state.name/]::enter(Context& context) {
-    std::cout << "Entering state: [state.name/]" << std::endl;
-    [if (not state.entry->isEmpty() and not state.entry.name.oclIsUndefined())]
-    [state.entry.name/](context);
-    [/if]
+[if (not state.entry->isEmpty() and not state.entry.name.oclIsUndefined())]
+void [state.name.toCamelCase().toUpperFirst()/]::enter(Context& context) {
+	std::cout << "Entering state: " << name() << std::endl;
+    // Your code for [state.entry.name.toScreamingSnakeCase()/] goes here.
 }
+[else]
+void [state.name.toCamelCase().toUpperFirst()/]::enter(Context& context) { return; }
+[/if]
 
-void [state.name/]::doActivity(Context& context) {
-    std::cout << "Executing activity in state: [state.name/]" << std::endl;
-    [if (not state.doActivity->isEmpty() and not state.doActivity.name.oclIsUndefined())]
-    [state.doActivity.name/](context);
-    [/if]
+[if (not state.doActivity->isEmpty() and not state.doActivity.name.oclIsUndefined())]
+void [state.name.toCamelCase().toUpperFirst()/]::doActivity(Context& context) {
+	std::cout << "Executing activity in state: " << name() << std::endl;
+    // Your code for [state.doActivity.name.toScreamingSnakeCase()/] goes here.
 }
+[else]
+void [state.name.toCamelCase().toUpperFirst()/]::doActivity(Context& context) { return; }
+[/if]
 
+[if (not state.exit->isEmpty() and not state.exit.name.oclIsUndefined())]
 void [state.name/]::exit(Context& context) {
-    std::cout << "Exiting state: [state.name/]" << std::endl;
-    [if (not state.exit->isEmpty() and not state.exit.name.oclIsUndefined())]
-    [state.exit.name/](context);
-    [/if]
+	std::cout << "Exiting state: " << name() << std::endl;
+    // Your code for [state.exit.name.toScreamingSnakeCase()/] goes here.
 }
+[else]
+void [state.name.toCamelCase().toUpperFirst()/]::exit(Context& context) { return; }
+[/if]
 
-void [state.name/]::transition(Context& context) {
-[let transitions : Sequence(Transition) = state.outgoing->filter(Transition)->asSequence()]
-[for (t : Transition | transitions)]
-[for (trigger : Trigger | t.trigger)]
-    std::cout << "Event: [trigger.name/]" << std::endl;
-[/for]
-    [if (t.guard->notEmpty())]
-    [if (not t.ownedComment->isEmpty())]
-    // [t.ownedComment->asSequence()->first()._body/]
-    [/if]
-    if ([t.guard.name/](context)) {
-    	[if (t.effect->notEmpty())]
-    	[t.effect->asSequence()->first().name/](context);
-    [/if]
-	    context.setState(std::make_unique<[t.target.name/]>());
-	    return;
-    }
-    [else]
-    [if (not t.ownedComment->isEmpty())]
-    // [t.ownedComment->asSequence()->first()._body/]
-    [/if]
-    [if (t.effect->notEmpty())]
-    	effect_[t.target.name/](context);
-	    context.setState(std::make_unique<[t.target.name/]>());
-	    return;
-	[else]
-    context.setState(std::make_unique<[t.target.name/]>());
-    return;
-    [/if]
-    [/if]
-[/for]
-[/let]
-    std::cout << "No valid transition from state: [state.name/]" << std::endl;
-}
-
-const char* [state.name/]::name() const {
+const char* [state.name.toCamelCase().toUpperFirst()/]::name() const {
     return "[state.name/]";
 }
 
-[if (not state.entry->isEmpty() and not state.entry.name.oclIsUndefined())]
-void [state.name/]::[state.entry.name/](Context& context) {
-    std::cout << "Executing [state.entry.name/]" << std::endl;
-}
-[/if]
-[if (not state.doActivity->isEmpty() and not state.doActivity.name.oclIsUndefined())]
-void [state.name/]::[state.doActivity.name/](Context& context) {
-    std::cout << "Executing [state.doActivity.name/]" << std::endl;
-}
-[/if]
-[if (not state.exit->isEmpty() and not state.exit.name.oclIsUndefined())]
-void [state.name/]::[state.exit.name/](Context& context) {
-    std::cout << "Executing [state.exit.name/]" << std::endl;
-}
-[/if]
-
-[for (t : Transition | state.outgoing->filter(Transition)->select(g | g.guard->notEmpty()))]
-bool [state.name/]::[t.guard.name/](Context& context) {
-    return context.get_[t.guard.specification.oclAsType(OpaqueExpression)._body->first().replaceAll('==', '() == ')/];
-}
-[/for]
-
-[for (t : Transition | state.outgoing->filter(Transition)->select(e | e.effect->notEmpty()))]
-void [state.name/]::[t.effect->asSequence()->first().name/](Context& context) {
-    std::cout << "Executing effect [t.effect->asSequence()->first().name/]" << std::endl;
-}
-[/for]
 [/file]
 
 [/for]

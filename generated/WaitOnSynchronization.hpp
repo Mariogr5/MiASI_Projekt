@@ -2,7 +2,7 @@
 #include "State.hpp"
 #include "Context.hpp"
 
-class Measurement : public State {
+class WaitOnSynchronization : public State {
 public:
     void enter(Context& ctx) override;
     void doActivity(Context& ctx) override;
