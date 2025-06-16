@@ -12,6 +12,6 @@ public:
 	void (*activity)(Context&);
 	
 	~Transition() = default;
-	Transition(State *_from, State *_to, Event _trigger = Event::NONE_EVENT, bool (*_guard)(Context&) = nullptr), void (*_activity(Context&) = nullptr
+	Transition(State *_from, State *_to, Event _trigger = Event::NONE_EVENT, bool (*_guard)(Context&) = nullptr, void (*_activity)(Context&) = nullptr)
         : from(_from), to(_to), trigger(_trigger), guard(_guard), activity(_activity) {}
 };

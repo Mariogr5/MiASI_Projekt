@@ -1,9 +1,15 @@
 #include "FirmwareUpdate.hpp"
 #include <iostream>
 
-void FirmwareUpdate::enter(Context& ctx) { return; }
+void FirmwareUpdate::enter(Context& ctx) { 
+	std::cout << "Entering state: " << name() << std::endl;
+}
 
-void FirmwareUpdate::doActivity(Context& context) { return; }
+void FirmwareUpdate::doActivity(Context& ctx) { 
+	std::cout << "Executing no activity in state: " << name() << std::endl;
+}
 
-void FirmwareUpdate::exit(Context& ctx) { return; }
+void FirmwareUpdate::exit(Context& ctx) { 
+	std::cout << "Exiting state: " << name() << std::endl;
+}
 

@@ -111,32 +111,35 @@
 [comment @main/]
 [file ('State.hpp', false, 'UTF-8')]
 #pragma once
+#include "Context.hpp"
 
 class State {
 protected:
-	const char *name;
+	const char *stateName;
 public:
-	explicit State(const char* _name) : name(_name) {}
+	explicit State(const char* _name) : stateName(_name) {}
     virtual ~State() = default;
     virtual void enter(Context &ctx) = 0;
     virtual void doActivity(Context &ctx) = 0;
     virtual void exit(Context &ctx) = 0;
-    const char *name() const { return name; }
+    const char *name() const { return stateName; }
 };
 
 class PseudoState : public State {
 public:
+	PseudoState() : State("START") {}
 	void enter(Context &ctx) override { return; }
 	void doActivity(Context &ctx) override { return; }
 	void exit(Context &ctx) override { return; }
 };
 [/file]
 
+
 [comment @main/]
 [file ('Event.hpp', false, 'UTF-8')]
 #pragma once
 
-public enum class Event {
+enum Event {
 	NONE_EVENT,
 	[for (event: Event | Model.allInstances()->collect(e | e.packagedElement)->flatten()
 		->filter(uml::Event)->select(e | e.name <> '')
@@ -175,7 +178,7 @@ public:
 	[/for]
 	// You can declare rest important attributes and methods here.
 	[/let]
-}
+};
 [/if]
 [/let]
 [/file]
@@ -196,9 +199,22 @@ public:
 	void (*activity)(Context&);
 	
 	~Transition() = default;
-	Transition(State *_from, State *_to, Event _trigger = Event::NONE_EVENT, bool (*_guard)(Context&) = nullptr), void (*_activity(Context&) = nullptr
+	Transition(State *_from, State *_to, Event _trigger = Event::NONE_EVENT, bool (*_guard)(Context&) = nullptr, void (*_activity)(Context&) = nullptr)
         : from(_from), to(_to), trigger(_trigger), guard(_guard), activity(_activity) {}
 };
+[/file]
+
+[file ('Activity.hpp', false, 'UTF-8')]
+#pragma once
+#include "Context.hpp"
+
+namespace Activity {
+[for (t : Transition | stateMachine.region->collect(r | r.transition)->flatten())]
+  [if (not t.effect.oclIsUndefined() and not t.effect.name.oclIsUndefined())]
+    void [t.effect.name.toCamelCase()/](Context& ctx) { std::cout << "Doing activity: [t.effect.name.toCamelCase()/]" << std::endl; };
+  [/if]
+[/for]
+}
 [/file]
 
 [comment @main/]
@@ -234,6 +250,7 @@ namespace Guard {
 [/if]
 class [state.name.toCamelCase().toUpperFirst()/] : public State {
 public:
+	[state.name.toCamelCase().toUpperFirst()/]() : State("[state.name/]") {}
     void enter(Context& ctx) override;
     void doActivity(Context& ctx) override;
     void exit(Context& ctx) override;
@@ -251,25 +268,31 @@ void [state.name.toCamelCase().toUpperFirst()/]::enter(Context& ctx) {
     // Your code for [state.entry.name.toScreamingSnakeCase()/] goes here.
 }
 [else]
-void [state.name.toCamelCase().toUpperFirst()/]::enter(Context& ctx) { return; }
+void [state.name.toCamelCase().toUpperFirst()/]::enter(Context& ctx) { 
+	std::cout << "Entering state: " << name() << std::endl;
+}
 [/if]
 
 [if (not state.doActivity->isEmpty() and not state.doActivity.name.oclIsUndefined())]
-void [state.name.toCamelCase().toUpperFirst()/]::doActivity(Context& context) {
-	std::cout << "Executing activity in state: " << name() << std::endl;
+void [state.name.toCamelCase().toUpperFirst()/]::doActivity(Context& ctx) {
+	std::cout << "Executing activity '[state.doActivity.name.toScreamingSnakeCase()/]' in state: " << name() << std::endl;
     // Your code for [state.doActivity.name.toScreamingSnakeCase()/] goes here.
 }
 [else]
-void [state.name.toCamelCase().toUpperFirst()/]::doActivity(Context& context) { return; }
+void [state.name.toCamelCase().toUpperFirst()/]::doActivity(Context& ctx) { 
+	std::cout << "Executing no activity in state: " << name() << std::endl;
+}
 [/if]
 
 [if (not state.exit->isEmpty() and not state.exit.name.oclIsUndefined())]
-void [state.name/]::exit(Context& ctx) {
+void [state.name.toCamelCase().toUpperFirst()/]::exit(Context& ctx) {
 	std::cout << "Exiting state: " << name() << std::endl;
     // Your code for [state.exit.name.toScreamingSnakeCase()/] goes here.
 }
 [else]
-void [state.name.toCamelCase().toUpperFirst()/]::exit(Context& ctx) { return; }
+void [state.name.toCamelCase().toUpperFirst()/]::exit(Context& ctx) { 
+	std::cout << "Exiting state: " << name() << std::endl;
+}
 [/if]
 
 [/file]
@@ -285,6 +308,7 @@ void [state.name.toCamelCase().toUpperFirst()/]::exit(Context& ctx) { return; }
 #include "Transition.hpp"
 #include "Guard.hpp"
 #include "Event.hpp"
+#include "Activity.hpp"
 [for (state : State | stateMachine.region->collect(r | r.subvertex)->flatten()->filter(uml::State))]
 #include "[state.name.toCamelCase().toUpperFirst()/].hpp"
 [/for]
@@ -301,20 +325,19 @@ public:
 		[let start : Pseudostate = stateMachine.region->collect(r | r.subvertex)
 			->filter(uml::Pseudostate)->select(s | s.kind.toString() = 'initial')->asSequence()->first()
 		]
-		State *[start.name.toCamelCase()/] = new PseudoState("[start.name/]");
+		State *[start.name.toCamelCase()/] = new PseudoState();
 		state = [start.name.toCamelCase()/];
 		states.push_back([start.name.toCamelCase()/]);
 		[/let]
 
 		[for (state : State | stateMachine.region->collect(r | r.subvertex)->flatten()->filter(uml::State))]
-		State *[state.name.toCamelCase()/] = new State("[state.name/]");
+		State *[state.name.toCamelCase()/] = new [state.name.toCamelCase().toUpperFirst()/]();
 		states.push_back([state.name.toCamelCase()/]);
 		[/for]
 		
 		transitions.assign({
 			[for (transition : Transition | stateMachine.region->collect(r | r.transition)->flatten())]
-			[let triggers : Sequence(uml::Trigger) = transition->collect(t | t.trigger)->asSequence()
-			]
+			[let triggers : Sequence(uml::Trigger) = transition->collect(t | t.trigger)->asSequence()]
 			[let trigger : String = if (
 					not triggers->isEmpty()
 					and not triggers->first().event.oclIsUndefined()
@@ -337,7 +360,18 @@ public:
 				'nullptr'
 				endif
 			]
-			new Transition([transition.source.name.toCamelCase()/], [transition.target.name.toCamelCase()/], [trigger/], [guard/], nullptr),
+			[let activity : String = 
+			  if (
+			    not transition.effect.oclIsUndefined() and 
+			    not transition.effect.name.oclIsUndefined()
+			  ) then
+			    'Activity::' + transition.effect.name.toCamelCase()
+			  else
+			    'nullptr'
+			  endif
+			]
+			new Transition([transition.source.name.toCamelCase()/], [transition.target.name.toCamelCase()/], [trigger/], [guard/], [activity/]),
+			[/let]
 			[/let]
 			[/let]
 			[/let]
@@ -367,22 +401,40 @@ public:
 				rc = 3;
 				continue;
 			}
-		    if (t->guard && !t->guard(*ctx)) {
+		    if (t->guard && !t->guard(ctx)) {
 				rc = 2;
 				continue;
 			}
 
-		    state->exit(*ctx);
-		    if (t->activity) t->activity(*ctx);
+		    state->exit(ctx);
+		    if (t->activity) t->activity(ctx);
 		    state = t->to;
-		    state->enter(*ctx);
-		    state->doActivity(*ctx);
+		    state->enter(ctx);
+		    state->doActivity(ctx);
 		    rc = 0;
 			break;
 		}
 		return rc;
 	}
 };
+[/file]
+
+[comment @main/]
+[file ('main.cpp', false, 'UTF-8')]
+#include <iostream>
+#include "StateMachine.hpp"
+
+int main() {
+    StateMachine sm;
+    std::cout << "Initial state: " << sm.state->name() << "\n";
+
+	// START -> INITIAL
+    int rc0 = sm.execute(Event::NONE_EVENT);
+    std::cout << "RC: " << rc0 << std::endl;
+
+    return 0;
+}
+
 [/file]
 
 [/template]

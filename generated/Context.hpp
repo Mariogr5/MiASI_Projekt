@@ -3,7 +3,7 @@
 
 class Context {
 public:
-	bool missingConfiguration;
 	bool firmwareUpdateAvailable;
+	bool missingConfiguration;
 	// You can declare rest important attributes and methods here.
-}
+};

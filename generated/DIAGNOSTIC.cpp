@@ -6,7 +6,11 @@ void Diagnostic::enter(Context& ctx) {
     // Your code for CHECK_IF_CONFIGURATION_EXISTS goes here.
 }
 
-void Diagnostic::doActivity(Context& context) { return; }
+void Diagnostic::doActivity(Context& ctx) { 
+	std::cout << "Executing no activity in state: " << name() << std::endl;
+}
 
-void Diagnostic::exit(Context& ctx) { return; }
+void Diagnostic::exit(Context& ctx) { 
+	std::cout << "Exiting state: " << name() << std::endl;
+}
 
