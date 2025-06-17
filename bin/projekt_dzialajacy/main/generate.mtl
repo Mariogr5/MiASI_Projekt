@@ -1,5 +1,13 @@
 [module generate('http://www.eclipse.org/uml2/5.0.0/UML')]
 
+[comment --- Pomocnicze Query --- /]
+
+[comment
+Przekształca ciąg znaków na format screaming snake case, np. 'hello world' -> 'HELLO_WORLD'. Obsługuje przypadki
+łancuchów znaków z wielokrotnymi spacjami, bądź podkreśleniami oraz z dowolnymi wielkościami liter.
+
+Wykorzystywane do nazw wyliczeń w C++.
+/]
 [query public toScreamingSnakeCase(input : String) : String =
 	if (input.trim() = '') then
         ''
@@ -28,6 +36,12 @@
     endif	
 /]
 
+[comment
+Przekształca ciąg znaków na format camel case, np. 'hello world' -> 'helloWorld'. Obsługuje przypadki łancuchów
+znaków z wielokrotnymi spacjami, bądź podkreśleniami oraz z dowolnymi wielkościami liter.
+
+Wykorzystywane do nazw zmiennych i metod w C++.
+/]
 [query public toCamelCase(input : String) : String =
 	if (input.trim() = '') then
 		''
@@ -62,6 +76,14 @@
 	endif
 /]
 
+[comment
+Na podstawie pierwszej wartości body elementu OpaqueExpression zwraca sekwencje definiująca: nazwe zmiennej,
+wykorzystany operator oraz wartość. Wspierane są tylko i wyłącznie podstawowe operatory porównania,
+takie jak: '==', '!=', '>=', '<=', '>' i '<'.
+
+Wykorzystywane do pozyskiwania nazw zmiennych dla kontekstu maszyny stanów i definiowania ciała funkcji 
+strażników w C++. 
+/]
 [query public parseExpression(expr : OpaqueExpression) : Sequence(String) =
 	if (expr._body->first().trim() = '') then
         Sequence{}
@@ -84,6 +106,13 @@
 	endif
 /]
 
+[comment 
+Na podstawie zidentyfikowanej wartości w łańcuchu znaków zwraca odpowiadający mu typ zmiennej w C++.
+Wspierane są tylko i wyłącznie 4 typy zmiennych: bool, int, float i string.
+Przykładowo dla wejścia: 'true' odpowiadający mu typ zmiennej to 'bool'.
+
+Wykorzystywane do deklaracji zmiennych dla kontekstu maszyny stanów w C++.
+/]
 [query public asCppType(input: String) : String =
 	if (input.trim() = '') then
 		''
@@ -105,38 +134,112 @@
 	endif
 /]
 
-[comment @main/]
-[template public generateElement(stateMachine : StateMachine)]
+[comment --- Koniec sekcji pomocniczych Query --- /]
 
-[comment @main/]
+[comment @main Główne wejście dla generacji kodu maszyny stanów w C++. /]
+[template public main(stateMachine : StateMachine)]
+[generateEventHeader(stateMachine) /]
+
+[comment @main
+Generuje plik nagłówkowy Transition.hpp z definicją klasy Transition reprezentującej przejście.
+/]
+[file ('Transition.hpp', false, 'UTF-8')]
+#pragma once
+#include "Context.hpp"
+#include "Event.hpp"
+#include "State.hpp"
+
+class Transition {
+public:
+	State *from;
+	State *to;
+	Event trigger;
+	bool (*guard)(Context&);
+	void (*activity)(Context&);
+	
+	~Transition() = default;
+	Transition(State *_from, State *_to, Event _trigger = Event::NONE_EVENT, bool (*_guard)(Context&) = nullptr, void (*_activity)(Context&) = nullptr)
+        : from(_from), to(_to), trigger(_trigger), guard(_guard), activity(_activity) {}
+};
+[/file]
+
+[let transitions: Sequence(Transition) = stateMachine.region->collect(r | r.transition)->asSequence()]
+[generateGuardHeader(transitions) /]
+[generateActivityHeader(transitions) /]
+[/let]
+
+[let expressions : Sequence(OpaqueExpression) = stateMachine.region->collect(r | r.transition)->flatten()
+		->collect(t | t.ownedRule)->flatten()->collect(c | c.specification)->flatten()
+		->filter(OpaqueExpression)->flatten()->asSequence()
+]
+[generateContextHeader(expressions) /]
+[/let]
+
+[comment @main
+Generuje plik nagłówkowy State.hpp z bazową klasą State i PseudoState, które reprezentują stan.
+/]
 [file ('State.hpp', false, 'UTF-8')]
 #pragma once
+#include "Context.hpp"
 
 class State {
 protected:
-	const char *name;
+	const char *stateName;
 public:
-	explicit State(const char* _name) : name(_name) {}
+	explicit State(const char* _name) : stateName(_name) {}
     virtual ~State() = default;
     virtual void enter(Context &ctx) = 0;
     virtual void doActivity(Context &ctx) = 0;
     virtual void exit(Context &ctx) = 0;
-    const char *name() const { return name; }
+    const char *name() const { return stateName; }
 };
 
 class PseudoState : public State {
 public:
+	PseudoState() : State("START") {}
 	void enter(Context &ctx) override { return; }
 	void doActivity(Context &ctx) override { return; }
 	void exit(Context &ctx) override { return; }
 };
 [/file]
 
-[comment @main/]
+[for (state : State | stateMachine.region->collect(r | r.subvertex)->flatten()->filter(uml::State))]
+[generateStateSpecificHeader(state) /]
+[generateStateSpecificSource(state) /]
+[/for]
+
+[generateStateMachineHeader(stateMachine) /]
+
+[comment @main 
+Generuje plik main.cpp jako punkt wejścia aplikacji maszyny stanów zawierający prosty kod służący
+przeprowadzenia testu maszyny stanów.
+/]
+[file ('main.cpp', false, 'UTF-8')]
+#include <iostream>
+#include "StateMachine.hpp"
+
+int main() {
+    StateMachine sm;
+    std::cout << "Initial state: " << sm.state->name() << "\n";
+
+	// START -> INITIAL
+    int rc = sm.execute(Event::NONE_EVENT);
+    std::cout << "RC: " << rc << std::endl;
+
+    return 0;
+}
+[/file]
+[/template]
+
+[comment
+Generuje plik nagłówkowy Event.hpp z typem wyliczeniowym dla wszystkich elementów Event zdefiniowanych w modelu,
+wykorzystując format: TYP_EVENTU_NAZWA_EVENTU.
+/]
+[template public generateEventHeader(stateMachine : StateMachine)]
 [file ('Event.hpp', false, 'UTF-8')]
 #pragma once
 
-public enum class Event {
+enum Event {
 	NONE_EVENT,
 	[for (event: Event | Model.allInstances()->collect(e | e.packagedElement)->flatten()
 		->filter(uml::Event)->select(e | e.name <> '')
@@ -146,16 +249,59 @@ public enum class Event {
 };
 
 [/file]
+[/template]
 
-[comment @main/]
+[comment
+Generuje plik nagłówkowy Guard.hpp z funkcjami strażników w przestrzeni nazw Guard,
+które zostały zdefiniowane w przejściach.
+/]
+[template public generateGuardHeader(transitions : Sequence(Transition))]
+[file ('Guard.hpp', false, 'UTF-8')]
+#include "Context.hpp"
+
+namespace Guard {
+	[for (constraint : Constraint | transitions->collect(t | t.ownedRule)->flatten()
+	)]
+	[let parts: Sequence(String) = constraint->collect(c | c.specification)->flatten()
+		->filter(OpaqueExpression)->asSequence()->first().parseExpression()
+	]
+	[if (parts->size() > 1)]
+	bool [constraint.name.toCamelCase()/](Context& ctx) { return ctx.[Sequence{parts->at(1).toCamelCase(), parts->at(2), parts->at(3)}->sep(' ')/]; }
+	[/if]
+	[/let]
+	[/for]
+};
+[/file]
+[/template]
+
+[comment
+Generuje plik nagłówkowy Activity.hpp z funkcjami aktywności w przestrzeni nazw Activity,
+które zostały zdefiniowane w przejściach.
+/]
+[template public generateActivityHeader(transitions : Sequence(Transition))]
+[file ('Activity.hpp', false, 'UTF-8')]
+#pragma once
+#include "Context.hpp"
+
+namespace Activity {
+[for (t : Transition | transitions)]
+  [if (not t.effect.oclIsUndefined() and not t.effect.name.oclIsUndefined())]
+    void [t.effect.name.toCamelCase()/](Context& ctx) { std::cout << "Doing activity: [t.effect.name.toCamelCase()/]" << std::endl; };
+  [/if]
+[/for]
+}
+[/file]
+[/template]
+
+[comment
+Generuje plik nagłówkowy Context.hpp z kontekstem maszyny stanów, w którym znajdują się zmienne
+wykorzystywane w strażnikach w danym przejściu i eliminuje potencjalne duplikaty.
+/]
+[template public generateContextHeader(expressions : Sequence(OpaqueExpression))]
 [file ('Context.hpp', false, 'UTF-8')]
 #pragma once
 #include <string>
 
-[let expressions : Sequence(OpaqueExpression) = stateMachine.region->collect(r | r.transition)->flatten()
-		->collect(t | t.ownedRule)->flatten()->collect(c | c.specification)->flatten()
-		->filter(OpaqueExpression)->flatten()->asSequence()
-]
 [if (expressions->select(e | e.parseExpression()->size() = 3)->size() = 0)]
 class Context;
 [else]
@@ -175,55 +321,16 @@ public:
 	[/for]
 	// You can declare rest important attributes and methods here.
 	[/let]
-}
+};
 [/if]
-[/let]
 [/file]
+[/template]
 
-[comment @main/]
-[file ('Transition.hpp', false, 'UTF-8')]
-#pragma once
-#include "Context.hpp"
-#include "Event.hpp"
-#include "State.hpp"
-
-class Transition {
-public:
-	State *from;
-	State *to;
-	Event trigger;
-	bool (*guard)(Context&);
-	void (*activity)(Context&);
-	
-	~Transition() = default;
-	Transition(State *_from, State *_to, Event _trigger = Event::NONE_EVENT, bool (*_guard)(Context&) = nullptr), void (*_activity(Context&) = nullptr
-        : from(_from), to(_to), trigger(_trigger), guard(_guard), activity(_activity) {}
-};
-[/file]
-
-[comment @main/]
-[file ('Guard.hpp', false, 'UTF-8')]
-#include "Context.hpp"
-
-namespace Guard {
-	[for (constraint : Constraint | stateMachine.region->collect(r | r.transition)->flatten()
-    	->collect(t | t.ownedRule)->flatten()
-	)]
-	[let parts: Sequence(String) = constraint->collect(c | c.specification)->flatten()
-		->filter(OpaqueExpression)->asSequence()->first().parseExpression()
-	]
-	[if (parts->size() > 1)]
-	bool [constraint.name.toCamelCase()/](Context& ctx) { return ctx.[Sequence{parts->at(1).toCamelCase(), parts->at(2), parts->at(3)}->sep(' ')/]; }
-	[/if]
-	[/let]
-	[/for]
-};
-
-[/file]
-
-[for (state : State | stateMachine.region->collect(r | r.subvertex)->flatten()->filter(uml::State))]
-
-[comment @main/]
+[comment
+Generuje plik nagłówkowy dla konkretnego stanu z deklaracjami metod enter, doActivity, exit i opcjonalnym
+komentarzem UML.
+/]
+[template public generateStateSpecificHeader(state : State)]
 [file (state.name.toCamelCase().toUpperFirst().concat('.hpp'), false, 'UTF-8')]
 #pragma once
 #include "State.hpp"
@@ -234,13 +341,18 @@ namespace Guard {
 [/if]
 class [state.name.toCamelCase().toUpperFirst()/] : public State {
 public:
+	[state.name.toCamelCase().toUpperFirst()/]() : State("[state.name/]") {}
     void enter(Context& ctx) override;
     void doActivity(Context& ctx) override;
     void exit(Context& ctx) override;
 };
 [/file]
+[/template]
 
-[comment @main/]
+[comment
+Generuje plik źródłowy dla konkretnego stanu używany do implementacji metod enter, doActivity i exit.
+/]
+[template public generateStateSpecificSource(state : State)]
 [file (state.name.toCamelCase().toUpperFirst().concat('.cpp'), false, 'UTF-8')]
 #include "[state.name.toCamelCase().toUpperFirst()/].hpp"
 #include <iostream>
@@ -251,32 +363,87 @@ void [state.name.toCamelCase().toUpperFirst()/]::enter(Context& ctx) {
     // Your code for [state.entry.name.toScreamingSnakeCase()/] goes here.
 }
 [else]
-void [state.name.toCamelCase().toUpperFirst()/]::enter(Context& ctx) { return; }
+void [state.name.toCamelCase().toUpperFirst()/]::enter(Context& ctx) { 
+	std::cout << "Entering state: " << name() << std::endl;
+}
 [/if]
 
 [if (not state.doActivity->isEmpty() and not state.doActivity.name.oclIsUndefined())]
-void [state.name.toCamelCase().toUpperFirst()/]::doActivity(Context& context) {
-	std::cout << "Executing activity in state: " << name() << std::endl;
+void [state.name.toCamelCase().toUpperFirst()/]::doActivity(Context& ctx) {
+	std::cout << "Executing activity '[state.doActivity.name.toScreamingSnakeCase()/]' in state: " << name() << std::endl;
     // Your code for [state.doActivity.name.toScreamingSnakeCase()/] goes here.
 }
 [else]
-void [state.name.toCamelCase().toUpperFirst()/]::doActivity(Context& context) { return; }
+void [state.name.toCamelCase().toUpperFirst()/]::doActivity(Context& ctx) { 
+	std::cout << "Executing no activity in state: " << name() << std::endl;
+}
 [/if]
 
 [if (not state.exit->isEmpty() and not state.exit.name.oclIsUndefined())]
-void [state.name/]::exit(Context& ctx) {
+void [state.name.toCamelCase().toUpperFirst()/]::exit(Context& ctx) {
 	std::cout << "Exiting state: " << name() << std::endl;
     // Your code for [state.exit.name.toScreamingSnakeCase()/] goes here.
 }
 [else]
-void [state.name.toCamelCase().toUpperFirst()/]::exit(Context& ctx) { return; }
+void [state.name.toCamelCase().toUpperFirst()/]::exit(Context& ctx) { 
+	std::cout << "Exiting state: " << name() << std::endl;
+}
 [/if]
 
 [/file]
+[/template]
 
-[/for]
+[comment
+Generuje kod instancji przejścia dla StateMachine.hpp używany do tworzenia obiektów Transition w C++ z odpowiednimi
+triggerami, strażnikami i aktywnościami.
+/]
+[template public generateTransitionDeclaration(transition : Transition)]
+[let triggers : Sequence(uml::Trigger) = transition->collect(t | t.trigger)->asSequence()]
+[let trigger : String = if (
+		not triggers->isEmpty()
+		and not triggers->first().event.oclIsUndefined()
+		and triggers->first().event.name <> ''
+	) then
+	'Event::' + triggers->first().event.eClass().name.toScreamingSnakeCase() + '_' +
+		triggers->first().event.name.toScreamingSnakeCase()
+	else
+	'Event::NONE_EVENT'
+	endif
+]
+[let constraints : Sequence(uml::Constraint) = transition->collect(t | t.ownedRule)->asSequence()]
+[let guard : String = if (
+	not constraints->isEmpty()
+	and not constraints->first()->collect(c | c.specification)->filter(OpaqueExpression)->asSequence()
+		->first().parseExpression()->isEmpty()
+	) then
+		'Guard::' + constraints->first().name.toCamelCase()
+	else
+	'nullptr'
+	endif
+]
+[let activity : String = 
+  if (
+    not transition.effect.oclIsUndefined() and 
+    not transition.effect.name.oclIsUndefined()
+  ) then
+    'Activity::' + transition.effect.name.toCamelCase()
+  else
+    'nullptr'
+  endif
+]
+new Transition([transition.source.name.toCamelCase()/], [transition.target.name.toCamelCase()/], [trigger/], [guard/], [activity/]),
+[/let]
+[/let]
+[/let]
+[/let]
+[/let]
+[/template]
 
-[comment @main/]
+[comment
+Generuje plik nagłówkowy StateMachine.hpp z implementacją maszyny stanów, w którym tworzone są odpowiednie
+obiekty reprezentujące stany lub przejścia na podstawie modelu UML.
+/]
+[template public generateStateMachineHeader(stateMachine : StateMachine)]
 [file ('StateMachine.hpp', false, 'UTF-8')]
 #pragma once
 #include <vector>
@@ -285,6 +452,7 @@ void [state.name.toCamelCase().toUpperFirst()/]::exit(Context& ctx) { return; }
 #include "Transition.hpp"
 #include "Guard.hpp"
 #include "Event.hpp"
+#include "Activity.hpp"
 [for (state : State | stateMachine.region->collect(r | r.subvertex)->flatten()->filter(uml::State))]
 #include "[state.name.toCamelCase().toUpperFirst()/].hpp"
 [/for]
@@ -301,47 +469,19 @@ public:
 		[let start : Pseudostate = stateMachine.region->collect(r | r.subvertex)
 			->filter(uml::Pseudostate)->select(s | s.kind.toString() = 'initial')->asSequence()->first()
 		]
-		State *[start.name.toCamelCase()/] = new PseudoState("[start.name/]");
+		State *[start.name.toCamelCase()/] = new PseudoState();
 		state = [start.name.toCamelCase()/];
 		states.push_back([start.name.toCamelCase()/]);
 		[/let]
 
 		[for (state : State | stateMachine.region->collect(r | r.subvertex)->flatten()->filter(uml::State))]
-		State *[state.name.toCamelCase()/] = new State("[state.name/]");
+		State *[state.name.toCamelCase()/] = new [state.name.toCamelCase().toUpperFirst()/]();
 		states.push_back([state.name.toCamelCase()/]);
 		[/for]
 		
 		transitions.assign({
 			[for (transition : Transition | stateMachine.region->collect(r | r.transition)->flatten())]
-			[let triggers : Sequence(uml::Trigger) = transition->collect(t | t.trigger)->asSequence()
-			]
-			[let trigger : String = if (
-					not triggers->isEmpty()
-					and not triggers->first().event.oclIsUndefined()
-					and triggers->first().event.name <> ''
-				) then
-				'Event::' + triggers->first().event.eClass().name.toScreamingSnakeCase() + '_' +
-					triggers->first().event.name.toScreamingSnakeCase()
-				else
-				'Event::NONE_EVENT'
-				endif
-			]
-			[let constraints : Sequence(uml::Constraint) = transition->collect(t | t.ownedRule)->asSequence()]
-			[let guard : String = if (
-				not constraints->isEmpty()
-				and not constraints->first()->collect(c | c.specification)->filter(OpaqueExpression)->asSequence()
-					->first().parseExpression()->isEmpty()
-				) then
-					'Guard::' + constraints->first().name.toCamelCase()
-				else
-				'nullptr'
-				endif
-			]
-			new Transition([transition.source.name.toCamelCase()/], [transition.target.name.toCamelCase()/], [trigger/], [guard/], nullptr),
-			[/let]
-			[/let]
-			[/let]
-			[/let]
+			[generateTransitionDeclaration(transition) /]
 			[/for]
 		});
 	}
@@ -367,16 +507,16 @@ public:
 				rc = 3;
 				continue;
 			}
-		    if (t->guard && !t->guard(*ctx)) {
+		    if (t->guard && !t->guard(ctx)) {
 				rc = 2;
 				continue;
 			}
 
-		    state->exit(*ctx);
-		    if (t->activity) t->activity(*ctx);
+		    state->exit(ctx);
+		    if (t->activity) t->activity(ctx);
 		    state = t->to;
-		    state->enter(*ctx);
-		    state->doActivity(*ctx);
+		    state->enter(ctx);
+		    state->doActivity(ctx);
 		    rc = 0;
 			break;
 		}
@@ -384,5 +524,4 @@ public:
 	}
 };
 [/file]
-
 [/template]
